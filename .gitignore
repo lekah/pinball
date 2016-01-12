@@ -1,0 +1,21 @@
+*.tex
+*.pdf
+*.log
+*.toc
+*.aux
+Doc/
+*.png
+*.html
+*.a
+*.x
+*.o
+*.mod
+make.sys
+myconfigure.sh
+version.f90.tmp
+# QE:
+*.xml
+*.wfc*
+*.igk*
+calculations
+*.swp
