@@ -44,10 +44,10 @@ SUBROUTINE openfil()
   ! ... nwordatwfc as above (IN REAL WORDS) for atomic wavefunctions
   !
   if (ionode) then !aris
-      open(iunpos,file=trim(tmp_dir)//'verlet.pos',position='append') !aris
-      open(iunevp,file=trim(tmp_dir)//'verlet.evp',position='append') !aris
-      open(iunfor,file=trim(tmp_dir)//'verlet.for',position='append') ! LEONID
-      open(iunvel,file=trim(tmp_dir)//'verlet.vel',position='append') !aris
+      open(iunpos,file=trim(tmp_dir)//'../verlet.pos',position='append') !aris
+      open(iunevp,file=trim(tmp_dir)//'../verlet.evp',position='append') !aris
+      open(iunfor,file=trim(tmp_dir)//'../verlet.for',position='append') ! LEONID
+      open(iunvel,file=trim(tmp_dir)//'../verlet.vel',position='append') !aris
       ! write(iunevp,'("NSTEP , TIME(ps), EKIN , ETOT , EKIN+ETOT , TEMP")') !aris
   end if !aris
 
