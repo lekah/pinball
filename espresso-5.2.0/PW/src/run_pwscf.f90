@@ -84,7 +84,12 @@ SUBROUTINE run_pwscf ( exit_status )
   
 
   lflipper = .true.                                     ! LEONID
-
+  
+  IF (ionode .and. lflipper) THEN
+    print*, ' ##########################################'
+    print*, '      THIS IS A FLIPPER CALCULATION'
+    print*, ' ##########################################'
+  END IF
   ! END LEONID
   
   !
@@ -129,7 +134,7 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   
   IF (lflipper) THEN
-
+   
     ! GET THE NUMBER OF PINBALLS
     nr_of_pinballs = 0
     DO counter = 1, nat
@@ -137,6 +142,11 @@ SUBROUTINE run_pwscf ( exit_status )
             nr_of_pinballs = nr_of_pinballs + 1
         END IF
     END DO
+    
+    if (ionode) THEN
+        print*, '    THIS IS A FLIPPER CALCULATION'
+        print*, '    NrPinballs  =  ', nr_of_pinballs
+    end if
     ! set the nr_of_pinballs back
 !~     nr_of_pinballs = nat
 
@@ -152,7 +162,9 @@ SUBROUTINE run_pwscf ( exit_status )
      ! READ THE CHARGE DENSITY GIVEN BY AN EARLIER CALCULATION
      normal_prefix = prefix
      prefix = prefix_flipper_charge 
+     print*, '&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
      CALL read_rho(charge_density, nspin)
+     print*, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
      prefix = normal_prefix
      
 !     aux_rho_of_r(1:dfftp%nnr,1:nspin) = charge_density%of_r(1:dfftp%nnr,1:nspin)
@@ -196,6 +208,7 @@ SUBROUTINE run_pwscf ( exit_status )
      !
      ! ... ionic section starts here
      !
+     
      CALL start_clock( 'ions' )
      conv_ions = .TRUE.
      !
