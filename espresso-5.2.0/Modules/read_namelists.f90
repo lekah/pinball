@@ -663,6 +663,7 @@ MODULE read_namelists_module
        CALL mp_bcast( wfcdir,        ionode_id, intra_image_comm )
        CALL mp_bcast( prefix,        ionode_id, intra_image_comm )
        CALL mp_bcast( prefix_flipper_charge, ionode_id, intra_image_comm )                  ! LEONID
+       CALL mp_bcast( lflipper,      ionode_id, intra_image_comm )                  ! LEONID
        CALL mp_bcast( max_seconds,   ionode_id, intra_image_comm )
        CALL mp_bcast( ekin_conv_thr, ionode_id, intra_image_comm )
        CALL mp_bcast( etot_conv_thr, ionode_id, intra_image_comm )

@@ -45,7 +45,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE mp_bands,         ONLY : intra_bgrp_comm      ! LEONID
   USE cell_base,        ONLY : omega                ! LEONID
   USE io_files,         ONLY : prefix               ! LEONID
-  USE input_parameters, ONLY : prefix_flipper_charge                    ! LEONID
+  USE input_parameters, ONLY : prefix_flipper_charge, lflipper          ! LEONID
   USE vlocal,           ONLY : strf, vloc                               ! LEONID
   USE ions_base,        ONLY : nat, ityp, tau, ntyp => nsp, zv          ! LEONID
   USE gvect,            ONLY :  ngm, gstart, g, eigts1, &
@@ -83,12 +83,15 @@ SUBROUTINE run_pwscf ( exit_status )
   
   
 
-  lflipper = .true.                                     ! LEONID
+
   
   IF (ionode .and. lflipper) THEN
     print*, ' ##########################################'
     print*, '      THIS IS A FLIPPER CALCULATION'
     print*, ' ##########################################'
+    
+    
+    
   END IF
   ! END LEONID
   
@@ -134,7 +137,8 @@ SUBROUTINE run_pwscf ( exit_status )
   !
   
   IF (lflipper) THEN
-   
+    
+!~     flipper_ityp = atm(ityp(ia))
     ! GET THE NUMBER OF PINBALLS
     nr_of_pinballs = 0
     DO counter = 1, nat
@@ -229,7 +233,7 @@ SUBROUTINE run_pwscf ( exit_status )
         !
         ! ... initialize the structure factor
         !
-        ntyp_save = ntyp   
+        ntyp_save = ntyp
         ntyp = 1
         CALL struc_fact( nat, tau, ntyp, ityp, ngm, g, bg, &
                    dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
@@ -276,21 +280,13 @@ SUBROUTINE run_pwscf ( exit_status )
 !~             WRITE( stdout, 9035) na, ityp(na), total_force(:,na)
 !~         !
 !~         END DO
-        
-        
-        
-        
-        
-          
-        
-        
+
         force(:,:)=0.d0
         do iatom=1,nr_of_pinballs
             force(1:3,iatom)=total_force(1:3,iatom)
         end do
         CALL move_ions()
         !
-
         
         !
 !~             IF ( istep < nstep .AND. .NOT. conv_ions ) &

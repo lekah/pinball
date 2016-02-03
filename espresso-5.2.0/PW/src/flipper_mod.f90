@@ -15,9 +15,9 @@ MODULE flipper_mod
                                 flipper_cons_qty                ! LEONID: flipper_ewld_energy+flipper_energy_external+flipper_energy_kin
   REAL(DP)                  :: flipper_temp
   INTEGER                   :: nr_of_pinballs                                  ! LEONID
-  LOGICAL                   :: lflipper                                  ! LEONID
+!~   LOGICAL                   :: lflipper                                  ! LEONID
   COMPLEX(DP), ALLOCATABLE  :: charge_g(:)                ! LEONID
-  
+  INTEGER                   :: flipper_ityp                     ! LEONID the integer that corresponds to the type of atom that is the pinball
   
   
 

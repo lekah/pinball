@@ -28,6 +28,7 @@ MODULE dynamics_module
    USE basic_algebra_routines
    USE io_files, ONLY : iunpos,iunevp,iunvel, iunfor !aris
    USE io_global, ONLY : ionode !aris
+   use input_parameters, ONLY : lflipper
    !
    IMPLICIT NONE
    !
@@ -709,7 +710,8 @@ CONTAINS
          USE cell_base,      ONLY : alat
          USE ions_base,      ONLY : nat, if_pos
          USE random_numbers, ONLY : gauss_dist, set_random_seed
-         USE flipper_mod,    ONLY : lflipper, nr_of_pinballs  ! LEONID
+         USE flipper_mod,    ONLY : nr_of_pinballs  ! LEONID
+         USE input_parameters, ONLY : lflipper      ! LEONID
          !
          IMPLICIT NONE
          !

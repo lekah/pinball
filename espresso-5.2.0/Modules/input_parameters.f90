@@ -156,6 +156,11 @@ MODULE input_parameters
           ! ... prefix to read out the charge density if we enter flipper  LEONID
         CHARACTER(LEN=256) :: prefix_flipper_charge = 'scf_charge'
         
+        LOGICAL  :: lflipper = .false.
+        
+        CHARACTER(len=256) :: flipper_typ = 'H'
+        
+        
         CHARACTER(len=256) :: pseudo_dir = './'
           ! specify the directory containing the pseudopotentials
 
@@ -283,7 +288,7 @@ MODULE input_parameters
           tefield2, saverho, tabps, lkpoint_dir, use_wannier, lecrpa,     &
           tqmmm, vdw_table_name, lorbm, memory, point_label_type,         &
           lcalc_z2, z2_m_threshold, z2_z_threshold,                       &
-          prefix_flipper_charge                                           ! LEONID
+          prefix_flipper_charge, lflipper                                 ! LEONID
 
 !
 !=----------------------------------------------------------------------------=!
