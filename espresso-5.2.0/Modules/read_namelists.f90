@@ -69,7 +69,7 @@ MODULE read_namelists_module
        IF( prog == 'PW' ) restart_mode = 'from_scratch'
        IF( prog == 'CP' ) restart_mode = 'restart'
        nstep  = 50
-       IF( prog == 'PW' ) iprint = 100000
+       IF( prog == 'PW' ) iprint = 1 ! LEONID changed that from 10000, I will use it to print the output
        IF( prog == 'CP' ) iprint = 10
        IF( prog == 'PW' ) isave = 0
        IF( prog == 'CP' ) isave = 100

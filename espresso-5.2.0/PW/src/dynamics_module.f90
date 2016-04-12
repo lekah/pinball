@@ -23,7 +23,7 @@ MODULE dynamics_module
    USE constants, ONLY : tpi, fpi
    USE constants, ONLY : amu_ry, ry_to_kelvin, au_ps, bohr_radius_cm, ry_kbar
    USE constants, ONLY : eps8
-   USE control_flags, ONLY : tolp
+   USE control_flags, ONLY : tolp, iprint
    !
    USE basic_algebra_routines
    USE io_files, ONLY : iunpos,iunevp,iunvel, iunfor !aris
@@ -232,7 +232,7 @@ CONTAINS
       istep = istep + 1
       !
       WRITE( UNIT = stdout, &
-             FMT = '(/,5X,"Entering Dynamics:",T28,"iteration",T37," = ", &
+             FMT = '(/,5X,"Entering Dyna::mics:",T28,"iteration",T37," = ", &
                     &I5,/,T28,"time",T37," = ",F8.4," pico-seconds",/)' ) &
           istep, elapsed_time
       !
@@ -438,16 +438,16 @@ CONTAINS
       ! ... infos are written on the standard output
       !
       IF (lflipper) THEN
-          WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
-                         & 5X,"Eext                  = ",F14.8," Ry",/,  &
-                         & 5X,"Eewld                 = ",F14.8," Ry",/,  &
-                         & 5X,"Etot                  = ",F14.8," Ry",/,  &
-                         & 5X,"Ekin + Etot (const)   = ",F14.8," Ry",/,  &
-                         & 5X,"temperature           = ",F14.8," K ")' ) &
-              ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new    
-
-          call write_traj(istep, elapsed_time, tau, vel, force, ekin, etot, temp_new) !aris ! LEONID: added force
-
+          if (mod(istep, iprint) .eq. 0) THEN
+              WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
+                             & 5X,"Eext                  = ",F14.8," Ry",/,  &
+                             & 5X,"Eewld                 = ",F14.8," Ry",/,  &
+                             & 5X,"Etot                  = ",F14.8," Ry",/,  &
+                             & 5X,"Ekin + Etot (const)   = ",F14.8," Ry",/,  &
+                             & 5X,"temperature           = ",F14.8," K ")' ) &
+                  ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
+              call write_traj(istep, elapsed_time, tau, vel, force, ekin, etot, temp_new) !aris ! LEONID: added force
+           endif
       ELSE
           WRITE( stdout, '(5X,"kinetic energy (Ekin) = ",F14.8," Ry",/,  &
                          & 5X,"Etot                  = ",F14.8," Ry",/,  &
@@ -1721,11 +1721,11 @@ CONTAINS
         
         write(iunvel,'("> ",I7,5f14.6)') istep, time, &
          ekin, etot, flipper_cons_qty, temp_new
-        do iat=1,nat !aris
+        do iat=1,nr_of_pinballs !aris
            write(iunpos,'(A,9f16.10)') atm(ityp(iat)),alat*tau(1:3,iat) !aris
         end do !aris
         
-        do iat=1,nat !aris
+        do iat=1,nr_of_pinballs !aris
            write(iunvel,'(A,9f16.10)') atm(ityp(iat)),alat*vel(1:3,iat) !aris
         end do !aris
         
@@ -1734,7 +1734,6 @@ CONTAINS
         do iat=1,nr_of_pinballs
            write(iunfor,'(A,9f16.10)') atm(ityp(iat)), force(1:3,iat) !aris
         end do !aris
-        
 
      end if !aris
    END SUBROUTINE write_traj !aris
