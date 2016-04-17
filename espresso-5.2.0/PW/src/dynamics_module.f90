@@ -1713,29 +1713,32 @@ CONTAINS
      
      integer ::iat,istep !aris
      if (ionode) then !aris
-        write(iunevp,'("> ",I7,5f14.6)') istep, time, &
-         ekin, etot, flipper_cons_qty, temp_new
+!~         write(iunevp,100) istep, time, &
+        write(iunevp,100) istep, time, ekin, etot, flipper_cons_qty, temp_new
         
-        write(iunpos,'("> ",I7,5f14.6)') istep, time, &
-         ekin, etot, flipper_cons_qty, temp_new
+!~         write(iunpos,100) istep, time, &
+        write(iunpos,100) istep, time, ekin, etot, flipper_cons_qty, temp_new
         
-        write(iunvel,'("> ",I7,5f14.6)') istep, time, &
-         ekin, etot, flipper_cons_qty, temp_new
+        write(iunvel, 100) istep, time, ekin, etot, flipper_cons_qty, temp_new
         do iat=1,nr_of_pinballs !aris
-           write(iunpos,'(A,9f16.10)') atm(ityp(iat)),alat*tau(1:3,iat) !aris
+           write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat) !aris
+!~            write(iunpos,*) atm(ityp(iat)),alat*tau(1:3,iat) !aris
         end do !aris
         
         do iat=1,nr_of_pinballs !aris
-           write(iunvel,'(A,9f16.10)') atm(ityp(iat)),alat*vel(1:3,iat) !aris
+           write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat) !aris
+!~            write(iunvel,*) atm(ityp(iat)),alat*vel(1:3,iat) !aris
         end do !aris
         
-        write(iunfor,'("> ",I7,5f14.6)') istep, time, &
-         ekin, etot, flipper_cons_qty, temp_new
+        write(iunfor,100) istep, time, ekin, etot, flipper_cons_qty, temp_new
         do iat=1,nr_of_pinballs
-           write(iunfor,'(A,9f16.10)') atm(ityp(iat)), force(1:3,iat) !aris
+           write(iunfor,101) atm(ityp(iat)), force(1:3,iat) !aris
+!~            write(iunfor,*) atm(ityp(iat)), force(1:3,iat) !aris
         end do !aris
 
      end if !aris
+   100 format("> ",I7,5(1X, f16.4))
+   101 format(A,3(1X,f16.10))
    END SUBROUTINE write_traj !aris
    
 END MODULE dynamics_module
