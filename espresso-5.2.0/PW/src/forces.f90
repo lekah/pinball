@@ -83,16 +83,16 @@ SUBROUTINE forces()
   forceh(:,:)   = 0.D0
   force (:,:)   = 0.D0
   !
-  WRITE( stdout, '(/,5x,"Forces acting on atoms (Ry/au):", / )')
+  IF ( iverbosity > 0 ) WRITE( stdout, '(/,5x,"Forces acting on atoms (Ry/au):", / )')
   !
   ! ... The nonlocal contribution is computed here
   !
-  print*, 'calling force_nl', nat 
+
   CALL force_us( forcenl )
   !
   ! ... The local contribution
   !
-  print*, 'calling force_lc'
+
   CALL force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
                  g, rho%of_r, nl, nspin, gstart, gamma_only, vloc, &
                  forcelc )
@@ -228,11 +228,14 @@ SUBROUTINE forces()
   !
   ! ... write on output the forces
   !
-  DO na = 1, nat
-     !
-     WRITE( stdout, 9035) na, ityp(na), force(:,na)
-     !
-  END DO
+  ! LEONID CHanged verbosity
+  IF ( iverbosity > 0 ) THEN
+      DO na = 1, nat
+         !
+         WRITE( stdout, 9035) na, ityp(na), force(:,na)
+         !
+      END DO
+   END IF
   !
   ! ... forces on fixed coordinates are set to zero ( C.S. 15/10/2003 )
   !

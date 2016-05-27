@@ -342,6 +342,7 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   USE scf,              ONLY : scf_type
   USE mp_bands,         ONLY : intra_bgrp_comm
   USE mp,               ONLY : mp_sum
+  USE control_flags,    ONLY : iverbosity
 
   !
   IMPLICIT NONE
@@ -501,7 +502,8 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   !
   rhoneg(:) = rhoneg(:) * omega / ( dfftp%nr1*dfftp%nr2*dfftp%nr3 )
   !
-  IF ( rhoneg(1) > eps8 .OR. rhoneg(2) > eps8 ) &
+  ! LEONID reduced verbosity
+  IF ((iverbosity > 0) .AND. ( rhoneg(1) > eps8 .OR. rhoneg(2) > eps8 )) &
      WRITE( stdout,'(/,5X,"negative rho (up, down): ",2ES10.3)') rhoneg
   !
   ! ... energy terms, local-density contribution

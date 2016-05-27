@@ -23,7 +23,7 @@ SUBROUTINE c_bands( iter )
   USE uspp,                 ONLY : vkb, nkb
   USE gvect,                ONLY : g
   USE wvfct,                ONLY : et, nbnd, npwx, igk, npw, current_k
-  USE control_flags,        ONLY : ethr, isolve, restart
+  USE control_flags,        ONLY : ethr, isolve, restart, iverbosity ! LEONID added iverbosity
   USE ldaU,                 ONLY : lda_plus_u, U_projection, wfcU
   USE lsda_mod,             ONLY : current_spin, lsda, isk
   USE wavefunctions_module, ONLY : evc
@@ -51,10 +51,14 @@ SUBROUTINE c_bands( iter )
   avg_iter = 0.D0
   IF ( restart ) CALL restart_in_cbands(ik_, ethr, avg_iter, et )
   !
+  
+     
   IF ( isolve == 0 ) THEN
-     WRITE( stdout, '(5X,"Davidson diagonalization with overlap")' )
+     ! LEONID changed verbosity
+     IF ( iverbosity > 0 ) WRITE( stdout, '(5X,"Davidson diagonalization with overlap")' )
   ELSE IF ( isolve == 1 ) THEN
-     WRITE( stdout, '(5X,"CG style diagonalization")')
+     ! LEONID changed verbosity
+     IF ( iverbosity > 0 ) WRITE( stdout, '(5X,"CG style diagonalization")')
   ELSE
      CALL errore ( 'c_bands', 'invalid type of diagonalization', isolve)
   END IF
@@ -132,7 +136,8 @@ SUBROUTINE c_bands( iter )
   CALL mp_sum( avg_iter, inter_pool_comm )
   avg_iter = avg_iter / nkstot
   !
-  WRITE( stdout, &
+  ! LEONID changed verbosity
+  IF ( iverbosity > 0 ) WRITE( stdout, &
        '( 5X,"ethr = ",1PE9.2,",  avg # of iterations =",0PF5.1 )' ) &
        ethr, avg_iter
   !

@@ -374,7 +374,7 @@ SUBROUTINE electrons_scf ( printout )
   !
   IF ( restart ) CALL restart_in_electrons (iter, dr2, ethr, et )
   !
-  WRITE( stdout, 9000 ) get_clock( 'PWSCF' )
+  if ( iverbosity > 0) WRITE( stdout, 9000 ) get_clock( 'PWSCF' )
   !
   CALL memstat( kilobytes )
   IF ( kilobytes > 0 ) WRITE( stdout, 9001 ) kilobytes/1000.0
@@ -414,7 +414,7 @@ SUBROUTINE electrons_scf ( printout )
      END IF
      iter = iter + 1
      !
-     WRITE( stdout, 9010 ) iter, ecutwfc, mixing_beta
+     WRITE( stdout, 9010 ) iter !, ecutwfc, mixing_beta
      !
      CALL flush_unit( stdout )
      !
@@ -655,7 +655,7 @@ SUBROUTINE electrons_scf ( printout )
         !
      END IF
      !
-     WRITE( stdout, 9000 ) get_clock( 'PWSCF' )
+     if ( iverbosity > 0) WRITE( stdout, 9000 ) get_clock( 'PWSCF' )
      !
      IF ( conv_elec ) WRITE( stdout, 9101 )
      !
@@ -720,7 +720,15 @@ SUBROUTINE electrons_scf ( printout )
      !
      etot = etot + plugin_etot 
      !
-     CALL print_energies ( printout )
+     ! LEONID chaged verbosity
+     IF ( iverbosity > 0 ) THEN
+        !
+        CALL print_energies ( printout )
+     ELSE
+        !
+        WRITE(stdout, 9003) etot, dr2
+     END IF
+     ! END LEONID
      !
      IF ( conv_elec ) THEN
         !
@@ -779,10 +787,15 @@ SUBROUTINE electrons_scf ( printout )
   !
   ! ... formats
   !
-9000 FORMAT(/'     total cpu time spent up to now is ',F10.1,' secs' )
+9000 FORMAT(/'     cpu-time-secs ',F10.1)
 9001 FORMAT(/'     per-process dynamical memory: ',f7.1,' Mb' )
 9002 FORMAT(/'     Self-consistent Calculation' )
-9010 FORMAT(/'     iteration #',I3,'     ecut=', F9.2,' Ry',5X,'beta=',F4.2 )
+
+! LEONID
+9003 FORMAT( '         total energy              =',0PF17.8,' Ry' &
+            /'         estimated scf accuracy    <',0PF17.8,' Ry' )
+
+9010 FORMAT(/'     iteration-#',I3)
 9050 FORMAT(/'     WARNING: integrated charge=',F15.8,', expected=',F15.8 )
 9101 FORMAT(/'     End of self-consistent calculation' )
 9110 FORMAT(/'     convergence has been achieved in ',i3,' iterations' )

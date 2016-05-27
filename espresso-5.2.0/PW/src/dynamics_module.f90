@@ -127,7 +127,8 @@ CONTAINS
       USE cell_base,      ONLY : alat, omega
       USE ener,           ONLY : etot
       USE force_mod,      ONLY : force, lstres
-      USE control_flags,  ONLY : istep, nstep, conv_ions, lconstrain, tv0rd
+      USE control_flags,  ONLY : istep, nstep, conv_ions, lconstrain, tv0rd, &
+                                 iverbosity  !LEONID
       !
       USE constraints_module, ONLY : nconstr, check_constraint
       USE constraints_module, ONLY : remove_constr_force, remove_constr_vec
@@ -150,6 +151,9 @@ CONTAINS
       REAL(DP), EXTERNAL :: dnrm2
       REAL(DP) :: kstress(3,3)
       INTEGER :: i, j
+      
+      ! LEONID
+      REAL(DP), EXTERNAL :: get_clock
       !
       ! ... the number of degrees of freedom
       !
@@ -232,9 +236,11 @@ CONTAINS
       istep = istep + 1
       !
       WRITE( UNIT = stdout, &
-             FMT = '(/,5X,"Entering Dyna::mics:",T28,"iteration",T37," = ", &
-                    &I5,/,T28,"time",T37," = ",F8.4," pico-seconds",/)' ) &
-          istep, elapsed_time
+             FMT = '(/,5X,"Entering Dynamics:",T28, /, &
+                    & 10X, "istep",T30," = ", I5, /, &
+                    & 10X, "clock_time",T30," = ", F10.4, /, &
+                    & 10X,"simulation_time_ps", T30, " = ",F10.4,/)' ) &
+          istep, get_clock( 'PWSCF'), elapsed_time
       !
       IF ( control_temp ) THEN
         CALL apply_thermostat()
@@ -431,7 +437,7 @@ CONTAINS
 #if ! defined (__REDUCE_OUTPUT)
       !
       ! LEONID we do not need to save the positions in the output file since they will be in a different file
-      if (.NOT. lflipper) CALL output_tau( .false., .false. )
+      if ((.NOT. lflipper) .AND. ( iverbosity > 0 )) CALL output_tau( .false., .false. )
       !
 #endif
       !
@@ -446,15 +452,24 @@ CONTAINS
                              & 5X,"Ekin + Etot (const)   = ",F14.8," Ry",/,  &
                              & 5X,"temperature           = ",F14.8," K ")' ) &
                   ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
-              call write_traj(istep, elapsed_time, tau, vel, force, ekin, etot, temp_new) !aris ! LEONID: added force
+              call write_traj(                                              &
+                    istep, elapsed_time, tau, vel, force, ekin, etot,       &
+                    flipper_cons_qty, temp_new, nr_of_pinballs              &
+                ) !aris ! LEONID: added force
            endif
       ELSE
-          WRITE( stdout, '(5X,"kinetic energy (Ekin) = ",F14.8," Ry",/,  &
-                         & 5X,"Etot                  = ",F14.8," Ry",/,  &
-                         & 5X,"Ekin + Etot (const)   = ",F14.8," Ry",/,  &
-                         & 5X,"temperature           = ",F14.8," K ")' ) &
-              ekin, etot, ( ekin  + etot ), temp_new    
-    
+          ! LEONID: Let's reduce the output of the MD
+          if (mod(istep, iprint) .eq. 0) THEN
+              WRITE( stdout, '(10X,"kinetic_energy      = ",F14.8," Ry",/,  &
+                             & 10X,"potential_energy    = ",F14.8," Ry",/,  &
+                             & 10X,"total_energy        = ",F14.8," Ry",/,  &
+                             & 10X,"temperature         = ",F14.8," K ")' ) &
+                  ekin, etot, ( ekin  + etot ), temp_new    
+                call write_traj(                                              &
+                        istep, elapsed_time, tau, vel, force, ekin, etot,     &
+                        ekin+etot, temp_new, nat                              &
+                    ) !aris ! LEONID: added force
+          endif
           IF (lstres) WRITE ( stdout, &
           '(5X,"Ions kinetic stress = ",F10.2," (kbar)",/3(27X,3F10.2/)/)') &
                   ((kstress(1,1)+kstress(2,2)+kstress(3,3))/3.d0*ry_kbar), &
@@ -469,13 +484,16 @@ CONTAINS
              IF ( mlt > eps8 ) &
                 CALL infomsg( 'dynamics', 'Total linear momentum <> 0' )
              !
-             WRITE( stdout, '(/,5X,"Linear momentum :",3(2X,F14.10))' ) ml(:)
+             ! LEONID: removed call for linear momentum, since there should be
+             ! an infomsg anyways
+             !   WRITE( stdout, '(/,5X,"Linear momentum :",3(2X,F14.10))' ) ml(:)
              !
           ENDIF
           !
           ! ... compute the average quantities
           !
-          CALL compute_averages( istep )
+          !  I really don't care about their averages
+          ! CALL compute_averages( istep )
       END IF
       !
    CONTAINS
@@ -971,8 +989,10 @@ CONTAINS
          !
       ENDIF
       !
-      WRITE( stdout, '(/,5X,"Entering Dynamics:",&
-                      & T28,"iteration",T37," = ",I5)' ) istep
+      WRITE( stdout, '(/,5X, T28)' ) "Entering Dynamics:"
+      WRITE( stdout, '(/,10X, T37, I9)' ) "istep-#", istep
+
+      !                & T28, /, "iteration",T37," = ",I5)' ) istep
       !
       ! ... Damped dynamics ( based on the projected-Verlet algorithm )
       !
@@ -1704,40 +1724,46 @@ CONTAINS
    end subroutine smart_MC
 
 !to change printing flipper quantities and temperature
-   SUBROUTINE write_traj(istep, time, tau, vel, force, ekin, etot, temp_new) !aris
+   SUBROUTINE write_traj(                   &
+            istep, time, tau, vel, force,   &
+            ekin, etot,                     &
+            conserved_quantity,temp_new,    &
+            nr_of_atoms                     &
+        )
      USE ions_base,          ONLY : nat,atm,ityp !aris
+     ! USE ions_base,          ONLY : atm,ityp
      USE cell_base,         ONLY : alat !aris
-     USE flipper_mod
+     ! USE flipper_mod
+
      real(DP) :: tau(3,nat),vel(3,nat), force(3, nat)
-     real(DP) :: time, ekin, etot, temp_new !aris
-     
+     real(DP) :: time, ekin, etot, temp_new, conserved_quantity !aris
+     integer  :: nr_of_atoms
      integer ::iat,istep !aris
+
      if (ionode) then !aris
-!~         write(iunevp,100) istep, time, &
-        write(iunevp,100) istep, time, ekin, etot, flipper_cons_qty, temp_new
+        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new
+
+        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new
         
-!~         write(iunpos,100) istep, time, &
-        write(iunpos,100) istep, time, ekin, etot, flipper_cons_qty, temp_new
-        
-        write(iunvel, 100) istep, time, ekin, etot, flipper_cons_qty, temp_new
-        do iat=1,nr_of_pinballs !aris
-           write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat) !aris
-!~            write(iunpos,*) atm(ityp(iat)),alat*tau(1:3,iat) !aris
+        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new
+
+        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new
+
+        do iat=1,nr_of_atoms !aris
+           write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
         end do !aris
         
-        do iat=1,nr_of_pinballs !aris
-           write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat) !aris
-!~            write(iunvel,*) atm(ityp(iat)),alat*vel(1:3,iat) !aris
+        do iat=1,nr_of_atoms !aris
+           write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat)
         end do !aris
         
-        write(iunfor,100) istep, time, ekin, etot, flipper_cons_qty, temp_new
-        do iat=1,nr_of_pinballs
-           write(iunfor,101) atm(ityp(iat)), force(1:3,iat) !aris
-!~            write(iunfor,*) atm(ityp(iat)), force(1:3,iat) !aris
+
+        do iat=1,nr_of_atoms
+           write(iunfor,101) atm(ityp(iat)), force(1:3,iat)
         end do !aris
 
      end if !aris
-   100 format("> ",I7,5(1X, f16.4))
+   100 format("> ",I7,5(1X, f16.8))
    101 format(A,3(1X,f16.10))
    END SUBROUTINE write_traj !aris
    

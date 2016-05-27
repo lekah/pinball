@@ -21,6 +21,7 @@ SUBROUTINE print_ks_energies()
   USE control_flags,        ONLY : conv_elec, lbands, iverbosity
   USE mp_bands,             ONLY : root_bgrp, intra_bgrp_comm, inter_bgrp_comm
   USE mp,                   ONLY : mp_sum, mp_bcast
+  USE control_flags,        ONLY : iverbosity !LEONID
   !
   IMPLICIT NONE
   !
@@ -57,15 +58,17 @@ SUBROUTINE print_ks_energies()
            !
         END IF
         !
-        IF ( conv_elec ) THEN
-           WRITE( stdout, 9021 ) ( xk(i,ik), i = 1, 3 ), ngk_g(ik)
-        ELSE
-           WRITE( stdout, 9020 ) ( xk(i,ik), i = 1, 3 )
-        END IF
-        !
-        WRITE( stdout, 9030 ) ( et(ibnd,ik) * rytoev, ibnd = 1, nbnd )
         !
         IF( iverbosity > 0 .AND. .NOT. lbands ) THEN
+            ! LEONID Moved here to reduce outputs of bands
+            IF ( conv_elec ) THEN
+               WRITE( stdout, 9021 ) ( xk(i,ik), i = 1, 3 ), ngk_g(ik)
+            ELSE
+               WRITE( stdout, 9020 ) ( xk(i,ik), i = 1, 3 )
+            END IF
+            !
+            WRITE( stdout, 9030 ) ( et(ibnd,ik) * rytoev, ibnd = 1, nbnd )
+
            !
            WRITE( stdout, 9032 )
            IF (ABS(wk(ik))>1.d-10) THEN
@@ -84,7 +87,7 @@ SUBROUTINE print_ks_energies()
   !
   ! ... print HOMO/Top of the VB and LUMO/Bottom of the CB, or E_Fermi
   !
-  IF ( .NOT. lbands ) CALL get_homo_lumo (ehomo, elumo)
+  IF (( .NOT. lbands ) .AND. ( iverbosity > 0 )) CALL get_homo_lumo (ehomo, elumo)
   !
   CALL flush_unit( stdout )
   !
