@@ -153,6 +153,7 @@ CONTAINS
       INTEGER :: i, j
       
       ! LEONID
+      REAL(DP) :: walltime_s
       REAL(DP), EXTERNAL :: get_clock
       !
       ! ... the number of degrees of freedom
@@ -234,13 +235,15 @@ CONTAINS
       !
       istep0= istep0+ 1
       istep = istep + 1
+      walltime_s = get_clock( 'PWSCF' )
+
       !
       WRITE( UNIT = stdout, &
              FMT = '(/,5X,"Entering Dynamics:",T28, /, &
                     & 10X, "istep",T30," = ", I5, /, &
                     & 10X, "clock_time",T30," = ", F10.4, /, &
                     & 10X,"simulation_time_ps", T30, " = ",F10.4,/)' ) &
-          istep, get_clock( 'PWSCF'), elapsed_time
+          istep, walltime_s, elapsed_time
       !
       IF ( control_temp ) THEN
         CALL apply_thermostat()
@@ -454,8 +457,8 @@ CONTAINS
                   ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
               call write_traj(                                              &
                     istep, elapsed_time, tau, vel, force, ekin, etot,       &
-                    flipper_cons_qty, temp_new, nr_of_pinballs              &
-                ) !aris ! LEONID: added force
+                    flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs  &
+                ) !aris ! LEONID: added force and walltime
            endif
       ELSE
           ! LEONID: Let's reduce the output of the MD
@@ -467,8 +470,8 @@ CONTAINS
                   ekin, etot, ( ekin  + etot ), temp_new    
                 call write_traj(                                              &
                         istep, elapsed_time, tau, vel, force, ekin, etot,     &
-                        ekin+etot, temp_new, nat                              &
-                    ) !aris ! LEONID: added force
+                        ekin+etot, temp_new, walltime_s, nat                  &
+                    ) !aris ! LEONID: added force and walltime
           endif
           IF (lstres) WRITE ( stdout, &
           '(5X,"Ions kinetic stress = ",F10.2," (kbar)",/3(27X,3F10.2/)/)') &
@@ -1726,8 +1729,8 @@ CONTAINS
 !to change printing flipper quantities and temperature
    SUBROUTINE write_traj(                   &
             istep, time, tau, vel, force,   &
-            ekin, etot,                     &
-            conserved_quantity,temp_new,    &
+            ekin, etot, conserved_quantity, &
+            temp_new, walltime_s,           &
             nr_of_atoms                     &
         )
      USE ions_base,          ONLY : nat,atm,ityp !aris
@@ -1736,18 +1739,18 @@ CONTAINS
      ! USE flipper_mod
 
      real(DP) :: tau(3,nat),vel(3,nat), force(3, nat)
-     real(DP) :: time, ekin, etot, temp_new, conserved_quantity !aris
+     real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris
      integer  :: nr_of_atoms
      integer ::iat,istep !aris
 
      if (ionode) then !aris
-        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new
+        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
 
-        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new
+        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
         
-        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new
+        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
 
-        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new
+        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
 
         do iat=1,nr_of_atoms !aris
            write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
@@ -1763,7 +1766,7 @@ CONTAINS
         end do !aris
 
      end if !aris
-   100 format("> ",I7,5(1X, f16.8))
+   100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1)
    101 format(A,3(1X,f16.10))
    END SUBROUTINE write_traj !aris
    
