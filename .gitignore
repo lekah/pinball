@@ -19,3 +19,4 @@ version.f90.tmp
 *.igk*
 calculations
 *.swp
+bin

@@ -1657,6 +1657,7 @@ setup.o : ../../Modules/mp_diag.o
 setup.o : ../../Modules/mp_pools.o
 setup.o : ../../Modules/noncol.o
 setup.o : ../../Modules/parameters.o
+setup.o : ../../Modules/input_parameters.o
 setup.o : ../../Modules/paw_variables.o
 setup.o : ../../Modules/recvec.o
 setup.o : ../../Modules/uspp.o

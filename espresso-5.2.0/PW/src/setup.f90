@@ -80,7 +80,8 @@ SUBROUTINE setup()
   USE exx,                ONLY : ecutfock, exx_grid_init, exx_div_check
   USE funct,              ONLY : dft_is_meta, dft_is_hybrid, dft_is_gradient
   USE paw_variables,      ONLY : okpaw
-  USE cellmd,             ONLY : lmovecell  
+  USE cellmd,             ONLY : lmovecell
+  USE input_parameters,   ONLY : lflipper ! LEONID added this so we can set okpaw to false if we are running the flipper
   !
   IMPLICIT NONE
   !
@@ -93,7 +94,18 @@ SUBROUTINE setup()
   ! ... okvan/okpaw = .TRUE. : at least one pseudopotential is US/PAW
   !
   okvan = ANY( upf(1:ntyp)%tvanp )
-  okpaw = ANY( upf(1:ntyp)%tpawp )
+  ! LEONID put the setting of okpaw inside branch that checks if lflipper
+  ! is true. This way we have avoid:
+  ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  !   Error in routine read_rho_general (1):
+  !   Reading PAW becsum
+  ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  IF ( lflipper ) THEN 
+    okpaw = .false.
+  ELSE
+    okpaw = ANY( upf(1:ntyp)%tpawp )
+  ENDIF
   !
   ! ... check for features not implemented with US-PP or PAW
   !
