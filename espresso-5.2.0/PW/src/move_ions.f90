@@ -47,6 +47,7 @@ SUBROUTINE move_ions()
   USE dynamics_module,        ONLY : verlet, langevin_md, proj_verlet
   USE dynamics_module,        ONLY : smart_MC
   USE dfunct,                 only : newd
+  USE input_parameters,       only : lrerun
   !
   IMPLICIT NONE
   !
@@ -248,7 +249,9 @@ SUBROUTINE move_ions()
               !
               CALL langevin_md()
               !
-           ELSE
+           ELSE IF (lrerun) THEN
+               CALL hustle_ions()
+           ELSE 
               !
               CALL verlet()
               !

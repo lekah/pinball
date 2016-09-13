@@ -783,6 +783,8 @@ hinit1.o : paw_symmetry.o
 hinit1.o : pwcom.o
 hinit1.o : realus.o
 hinit1.o : scf_mod.o
+hustle_ions.o : ../../Modules/ions_base.o
+hustle_ions.o : ../../Modules/control_flags.o 
 init_at_1.o : ../../Modules/atom.o
 init_at_1.o : ../../Modules/cell_base.o
 init_at_1.o : ../../Modules/constants.o
@@ -1014,6 +1016,7 @@ move_ions.o : dynamics_module.o
 move_ions.o : newd.o
 move_ions.o : pwcom.o
 move_ions.o : symm_base.o
+move_ions.o : hustle_ions.o
 n_plane_waves.o : ../../Modules/kind.o
 n_plane_waves.o : ../../Modules/mp.o
 n_plane_waves.o : ../../Modules/mp_pools.o

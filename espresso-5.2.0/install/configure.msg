@@ -5,7 +5,7 @@ but may fail if they have been installed in non-standard locations.
 If a required library is not found, the local copy will be compiled.
 
 The following libraries have been found:
-  BLAS_LIBS=  -lmkl_intel_lp64  -lmkl_sequential -lmkl_core
+  BLAS_LIBS=  -lmkl_gf_lp64  -lmkl_sequential -lmkl_core
   LAPACK_LIBS=
   @delete@
   FFT_LIBS= -lfftw3 

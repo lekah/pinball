@@ -109,6 +109,7 @@ h_psi.o \
 h_psi_meta.o \
 hinit0.o \
 hinit1.o \
+hustle_ions.o \
 init_ns.o \
 init_q_aeps.o \
 init_run.o \

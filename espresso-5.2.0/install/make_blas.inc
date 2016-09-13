@@ -15,11 +15,11 @@ PLAT =
 #  selected.  Define LOADER and LOADOPTS to refer to the loader and 
 #  desired load options for your machine.
 #
-FORTRAN  = ifort 
+FORTRAN  = gfortran 
 OPTS     = -O2 
 DRVOPTS  = $(OPTS)
 NOOPT    = 
-LOADER   = ifort
+LOADER   = gfortran
 LOADOPTS = 
 #
 #  The archiver and the flag(s) to use when building archive (library)
