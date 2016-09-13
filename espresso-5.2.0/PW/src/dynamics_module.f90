@@ -433,9 +433,6 @@ CONTAINS
       !
       CLOSE( UNIT = 4, STATUS = 'KEEP' )
       !
-      ! ... here the tau are shifted
-      !
-      tau(:,:) = tau_new(:,:)
       !
 #if ! defined (__REDUCE_OUTPUT)
       !
@@ -498,6 +495,13 @@ CONTAINS
           !  I really don't care about their averages
           ! CALL compute_averages( istep )
       END IF
+
+      ! ... here the tau are shifted
+      ! LEONID: I moved this to this point, since before, since tau was overwritten with
+      ! future positions before being printed
+      ! 
+      tau(:,:) = tau_new(:,:)
+
       !
    CONTAINS
       !
