@@ -57,6 +57,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE force_mod,      ONLY : force 
   USE wavefunctions_module,  ONLY: psic !Aris
   USE flipper_mod
+  USE hustler,          ONLY : init_hustler
 
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
@@ -125,6 +126,7 @@ SUBROUTINE run_pwscf ( exit_status )
   CALL qmmm_update_positions()
   !
   CALL init_run()
+  CALL init_hustler()
   !
   ! ... dry run: code will stop here if called with exit file present
   ! ... useful for a quick and automated way to check input data

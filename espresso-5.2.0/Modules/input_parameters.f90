@@ -157,8 +157,8 @@ MODULE input_parameters
         CHARACTER(LEN=256) :: prefix_flipper_charge = 'scf_charge'
         
         ! This will be a file that stores positions so that we can recompute stuff from previous trajectory
-        CHARACTER(LEN=256) :: positions = ''
-        LOGICAL :: lrerun = .false.
+        CHARACTER(LEN=256) :: hustlerfile = ''
+        LOGICAL :: lhustle = .false.
         
         
         LOGICAL  :: lflipper = .false.
@@ -293,7 +293,7 @@ MODULE input_parameters
           tefield2, saverho, tabps, lkpoint_dir, use_wannier, lecrpa,     &
           tqmmm, vdw_table_name, lorbm, memory, point_label_type,         &
           lcalc_z2, z2_m_threshold, z2_z_threshold,                       &
-          prefix_flipper_charge, lflipper, lrerun, positions            ! LEONID
+          prefix_flipper_charge, lflipper, lhustle, hustlerfile            ! LEONID
 
 !
 !=----------------------------------------------------------------------------=!
