@@ -45,7 +45,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE mp_bands,         ONLY : intra_bgrp_comm      ! LEONID
   USE cell_base,        ONLY : omega                ! LEONID
   USE io_files,         ONLY : prefix               ! LEONID
-  USE input_parameters, ONLY : prefix_flipper_charge, lflipper          ! LEONID
+  USE input_parameters, ONLY : prefix_flipper_charge, lflipper, lhustle          ! LEONID
   USE vlocal,           ONLY : strf, vloc                               ! LEONID
   USE ions_base,        ONLY : nat, ityp, tau, ntyp => nsp, zv          ! LEONID
   USE gvect,            ONLY :  ngm, gstart, g, eigts1, &
@@ -57,7 +57,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE force_mod,      ONLY : force 
   USE wavefunctions_module,  ONLY: psic !Aris
   USE flipper_mod
-  USE hustler,          ONLY : init_hustler
+  USE hustler,          ONLY : init_hustler, end_hustler
 
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
@@ -126,7 +126,6 @@ SUBROUTINE run_pwscf ( exit_status )
   CALL qmmm_update_positions()
   !
   CALL init_run()
-  CALL init_hustler()
   !
   ! ... dry run: code will stop here if called with exit file present
   ! ... useful for a quick and automated way to check input data
@@ -187,6 +186,8 @@ SUBROUTINE run_pwscf ( exit_status )
      END DO
   END IF
   
+  if ( lhustle )  CALL init_hustler()
+  
   
   main_loop: DO
      !
@@ -246,12 +247,9 @@ SUBROUTINE run_pwscf ( exit_status )
         flipper_ewld_energy = ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
                 omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
         
-!~         if (ionode) print*, 'FLIPPER: TOTAL POTENTIAL ENERGY: ',flipper_energy_external+flipper_ewld_energy  !Aris
+        if (ionode) print*, 'FLIPPER: TOTAL EXTERMAL ENERGY: ',flipper_energy_external
+        if (ionode) print*, 'FLIPPER: TOTAL EWALD ENERGY: ',flipper_ewld_energy  !Aris
         
-!~         if (ionode) print*, 'CALCULATING EWALD FORCES'
-        
-!        CALL flipper_force_ewald( alat, nat, nr_of_pinballs, ntyp, ityp, zv, at, bg, tau, omega, g, &
-!                 gg, ngm, gstart, gamma_only, gcutm, strf, flipper_ewald_force )
          CALL flipper_force_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                  gg, ngm, gstart, gamma_only, gcutm, strf )
 
@@ -274,19 +272,12 @@ SUBROUTINE run_pwscf ( exit_status )
             END DO
         END DO
         
-        ! LEONID: set the conserved quantity
-        
-        ! LEONID: let's reduce the writing into the main output file
-!~         DO na = 1, nr_of_pinballs
-!~         !
-!~             WRITE( stdout, 9035) na, ityp(na), total_force(:,na)
-!~         !
-!~         END DO
 
         force(:,:)=0.d0
         do iatom=1,nr_of_pinballs
             force(1:3,iatom)=total_force(1:3,iatom)
         end do
+
         CALL move_ions()
         !
         
@@ -298,7 +289,7 @@ SUBROUTINE run_pwscf ( exit_status )
 !~         if (ionode) print*, '    FLIPPER: EWALD ENERGY: ',flipper_ewld_energy  !Aris
 !~         if (ionode) print*, '    FLIPPER: EXTERNAL ENERGY: ',flipper_energy_external  !Aris
 !~         if (ionode) print*, '    FLIPPER: CONSERVED ENERGY', flipper_cons_qty  !Aris
-            
+!~             
      
       ELSE 
          IF ( lforce ) CALL forces()          
@@ -356,6 +347,8 @@ SUBROUTINE run_pwscf ( exit_status )
 !      DEALLOCATE(aux_rho_of_r)                 ! LEONID
       call deallocate_flipper()
   END IF
+  
+  if ( lhustle )  CALL end_hustler()
   !
   ! ... save final data file
   !

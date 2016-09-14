@@ -908,6 +908,7 @@ input.o : start_k.o
 input.o : symm_base.o
 input.o : wyckoff.o
 input.o : xdm_dispersion.o
+input.o : hustler.o
 interpolate.o : ../../Modules/control_flags.o
 interpolate.o : ../../Modules/fft_base.o
 interpolate.o : ../../Modules/fft_interfaces.o
@@ -1022,6 +1023,7 @@ move_ions.o : ../../Modules/kind.o
 move_ions.o : ../../Modules/mp.o
 move_ions.o : ../../Modules/mp_images.o
 move_ions.o : ../../Modules/recvec.o
+move_ions.o : ../../Modules/input_parameters.o
 move_ions.o : atomic_wfc_mod.o
 move_ions.o : dynamics_module.o
 move_ions.o : newd.o
