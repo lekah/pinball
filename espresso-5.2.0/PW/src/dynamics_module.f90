@@ -229,13 +229,9 @@ CONTAINS
          !
       ENDIF
       !
-      ! ... elapsed_time is in picoseconds
-      !
-      elapsed_time = elapsed_time + dt*2.D0*au_ps
-      !
-      istep0= istep0+ 1
-      istep = istep + 1
       walltime_s = get_clock( 'PWSCF' )
+      
+      ! The istep0, istep augmentations was here
 
       !
       WRITE( UNIT = stdout, &
@@ -249,7 +245,7 @@ CONTAINS
         CALL apply_thermostat()
         
         
-        if (istep0 == nstep_thermo) THEN 
+        if (istep0 + 1 == nstep_thermo) THEN 
             control_temp = .false.
         endif
          ! LEONID: Changing, so that if istep == nstep_thermo, control_temp is false
@@ -422,17 +418,14 @@ CONTAINS
 #endif
       !
       ! ... save all the needed quantities on file
-      !
       CALL seqopn( 4, 'md', 'FORMATTED',  file_exists )
       !
+
+      !
       leof = .false.
-      WRITE( UNIT = 4, FMT = * ) etot, istep, tau(:,:), leof
       !
-      WRITE( UNIT = 4, FMT = * ) &
-          temp_new, temp_av, mass(:), total_mass, elapsed_time, tau_ref(:,:)
-      !
-      CLOSE( UNIT = 4, STATUS = 'KEEP' )
-      !
+
+
       !
 #if ! defined (__REDUCE_OUTPUT)
       !
@@ -443,6 +436,10 @@ CONTAINS
       !
       ! ... infos are written on the standard output
       !
+
+      
+      
+      
       IF (lflipper) THEN
           if (mod(istep, iprint) .eq. 0) THEN
               WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
@@ -500,7 +497,24 @@ CONTAINS
       ! LEONID: I moved this to this point, since before, since tau was overwritten with
       ! future positions before being printed
       ! 
+
+      elapsed_time = elapsed_time + dt*2.D0*au_ps
+      !
+      istep0= istep0+ 1
+      istep = istep + 1
+
+      WRITE( UNIT = 4, FMT = * ) etot, istep, tau(:,:), leof
+      !
+      WRITE( UNIT = 4, FMT = * ) &
+          temp_new, temp_av, mass(:), total_mass, elapsed_time, tau_ref(:,:)
+      !
+      CLOSE( UNIT = 4, STATUS = 'KEEP' )
+
       tau(:,:) = tau_new(:,:)
+      ! ... elapsed_time is in picoseconds
+      !
+
+      
 
       !
    CONTAINS
