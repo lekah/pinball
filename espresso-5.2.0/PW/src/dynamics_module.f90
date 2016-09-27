@@ -368,7 +368,7 @@ CONTAINS
           flipper_energy_kin = flipper_energy_kin * alat**2
           ! flipper_temp = 2.D0 / dble( nr_of_pinballs ) * flipper_energy_kin * ry_to_kelvin
           ekin = flipper_energy_kin
-          etot = flipper_energy_external + flipper_ewld_energy
+          etot = flipper_energy_external + flipper_ewld_energy + flipper_nlenergy
           flipper_cons_qty  =  ekin + etot
       else
           ml   = 0.D0

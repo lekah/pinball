@@ -55,13 +55,35 @@ SUBROUTINE run_pwscf ( exit_status )
   USE fft_interfaces,   ONLY : fwfft
   
   USE force_mod,      ONLY : force 
-  USE wavefunctions_module,  ONLY: psic !Aris
+  USE wavefunctions_module,  ONLY: psic, evc !Aris
+  use wvfct, only : nbnd, wg
   USE flipper_mod
   USE hustler,          ONLY : init_hustler, end_hustler
+  
+ ! For temp check
+   USE fft_base,        ONLY : dffts
+   USE gvecs,           ONLY : nls, nlsm
+   USE wvfct,           ONLY : npw, igk
+   USE fft_interfaces,  ONLY : invfft
+   USE cell_base,       ONLY : omega
+   use io_files,        ONLY : nwordwfc,diropn,iunwfc
+   USE klist,           only : xk
+   USE uspp,     ONLY : vkb, nkb
+   
+   ! END for temp check
 
   IMPLICIT NONE
   INTEGER, INTENT(OUT) :: exit_status
   !
+  ! for temp check
+  
+  LOGICAL :: exst
+  INTEGER, EXTERNAL :: find_free_unit
+  INTEGER :: iv, i, iun
+  REAL(DP) :: q_tot, q_tot2, q_tot3
+  REAL(DP), allocatable :: charge2(:)
+  ! end temp check
+  
   !
   ! START LEONID
 !  LOGICAL  :: lflipper                                  ! LEONID
@@ -142,6 +164,7 @@ SUBROUTINE run_pwscf ( exit_status )
 !~     flipper_ityp = atm(ityp(ia))
     ! GET THE NUMBER OF PINBALLS
     nr_of_pinballs = 0
+    wg(:,:) = 2.0d0
     DO counter = 1, nat
         IF (ityp(counter) == 1) THEN
             nr_of_pinballs = nr_of_pinballs + 1
@@ -169,7 +192,57 @@ SUBROUTINE run_pwscf ( exit_status )
      prefix = prefix_flipper_charge 
      print*, '&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
      CALL read_rho(charge_density, nspin)
+
+    iun=find_free_unit()
+    
+    print*, '!!!!!!!!!', prefix
+    call diropn(iun, 'wfc', 2*nwordwfc, exst )
+    call davcio (evc, 2*nwordwfc, iun, 1,-1) 
+!~     call davcio (evc, 2*nwordwfc, iunwfc, 1,-1) 
+    
+       
+    !call  diropn_due (prefix_due,iun, 'wfc', 2*nwordwfc, exst )
+    ! call davcio (evc_due, 2*nwordwfc, iun, 1, - 1)
+
+    allocate(charge2(dffts%nnr))
+    charge2(:)=0.d0
+    do iv=1,nbnd !,2
+       psic=0.d0
+   !    if (iv==nbnd) then
+           psic(nls(1:npw))=evc(1:npw,iv)
+           psic(nlsm(1:npw))=CONJG(evc(1:npw,iv))
+   !    else
+   !        psic(nls(1:npw))=evc(1:npw,iv)+ ( 0.D0, 1.D0 ) *evc(1:npw,iv+1)
+   !        psic(nlsm(1:npw))=CONJG(evc(1:npw,iv)- ( 0.D0, 1.D0 ) *evc(1:npw,iv+1))
+   !    end if
+       call invfft ('Wave', psic, dffts)
+       charge2(1:dffts%nnr)=charge2(1:dffts%nnr)+dble(psic(1:dffts%nnr))**2.0 ! + dimag(psic(1:dffts%nnr))**2.0
+   !    if (iv /=nbnd) then
+   !       charge(1:dffts%nnr)=charge(1:dffts%nnr)+dimag(psic(1:dffts%nnr))**2.0
+   !    end if
+    end do
+    q_tot=0.
+    q_tot2=0.
+    q_tot3=0.
+    do i=1,dffts%nnr
+       q_tot=q_tot + ( 2.d0 * charge2(i) - omega * charge_density%of_r(i, 1) )**2
+       q_tot2=q_tot2 + 2.d0 *charge2(i)
+       q_tot3=q_tot3 + charge_density%of_r(i, 1) * omega
+    end do
+    q_tot = q_tot / (dffts%nr1*dffts%nr2*dffts%nr3)
+    q_tot2 = q_tot2 / (dffts%nr1*dffts%nr2*dffts%nr3)
+    q_tot3 = q_tot3 /    (dffts%nr1*dffts%nr2*dffts%nr3)
+    call mp_sum(q_tot, intra_bgrp_comm)
+    call mp_sum(q_tot2, intra_bgrp_comm)
+    call mp_sum(q_tot3, intra_bgrp_comm)
+    print*,'q_tot',q_tot
+    print*,'q_tot2',q_tot2
+    print*,'q_tot3',q_tot3
+    deallocate(charge2)
+    ! temp END
      print*, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+    
+    
      prefix = normal_prefix
      
 !     aux_rho_of_r(1:dfftp%nnr,1:nspin) = charge_density%of_r(1:dfftp%nnr,1:nspin)
@@ -263,12 +336,26 @@ SUBROUTINE run_pwscf ( exit_status )
 !~         if (ionode) print*, flipper_forcelc
 !~         if (ionode) print*, 'DONE'
                  
+        ! if (( nkb > 0 ).and. flipper_nonlocal) then
+        CALL init_us_2( npw, igk, xk(1,1), vkb )
+        !                    CALL flipper_nl_energy (flipper_nlenergy)  
+        CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
         
+        DO na = 1, nat
+            print*, flipper_forcenl(:, na)
+        END DO
+        print*, 'ENERGY NON-local', flipper_nlenergy
+        !else
+         !   flipper_nlenergy=0.d0
+         !   flipper_forcenl(:,:)=0.d0
+        ! end if
+
         DO ipol = 1, 3
              DO na = 1, nr_of_pinballs
                 total_force(ipol,na) = &
                                 flipper_ewald_force(ipol,na)    + &
-                                flipper_forcelc(ipol,na)   
+                                flipper_forcelc(ipol,na)        + &
+                                flipper_forcenl(ipol, na)
             END DO
         END DO
         
