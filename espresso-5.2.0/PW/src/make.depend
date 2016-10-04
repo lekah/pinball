@@ -474,6 +474,7 @@ exx.o : start_k.o
 exx.o : symm_base.o
 exx.o : us_exx.o
 find_group.o : ../../Modules/kind.o
+flipper_force_energy_us.o : pwcom.o
 flipper_force_ewald.o : ../../Modules/constants.o
 flipper_force_ewald.o : ../../Modules/kind.o
 flipper_force_ewald.o : ../../Modules/mp.o
