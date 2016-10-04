@@ -80,6 +80,7 @@ ewald_dipole.o \
 exx.o \
 find_group.o \
 flipper_force_lc.o \
+flipper_force_energy_us.o \
 flipper_force_ewald.o \
 flipper_mod.o \
 flipper_setlocal.o \
