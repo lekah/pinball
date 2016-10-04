@@ -159,6 +159,7 @@ MODULE input_parameters
         ! This will be a file that stores positions so that we can recompute stuff from previous trajectory
         CHARACTER(LEN=256) :: hustlerfile = ''
         LOGICAL :: lhustle = .false.
+        INTEGER :: hustler_nat = -1
         
         
         LOGICAL  :: lflipper = .false.
@@ -293,7 +294,7 @@ MODULE input_parameters
           tefield2, saverho, tabps, lkpoint_dir, use_wannier, lecrpa,     &
           tqmmm, vdw_table_name, lorbm, memory, point_label_type,         &
           lcalc_z2, z2_m_threshold, z2_z_threshold,                       &
-          prefix_flipper_charge, lflipper, lhustle, hustlerfile            ! LEONID
+          prefix_flipper_charge, lflipper, lhustle, hustlerfile, hustler_nat            ! LEONID
 
 !
 !=----------------------------------------------------------------------------=!

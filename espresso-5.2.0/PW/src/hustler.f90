@@ -7,7 +7,7 @@ MODULE hustler
     USE io_global,              ONLY : stdout, ionode
     USE kinds,                  ONLY : DP
     USE constants,              ONLY : au_ps, eps8 , ry_to_kelvin ,amu_ry
-    USE input_parameters,       ONLY : lflipper
+    USE input_parameters,       ONLY : lflipper, hustler_nat
     USE dynamics_module,    ONLY : write_traj, tau_new, tau_old, vel, mass, dt, ndof, vel_defined
     USE flipper_mod,        ONLY : flipper_ewld_energy, &
                           flipper_energy_external, &
@@ -30,7 +30,7 @@ MODULE hustler
 
 
     INTEGER :: istep0 = 0 
-    INTEGER :: mynat
+!~     INTEGER :: mynat
     INTEGER :: i !, j
     CHARACTER*3 :: atom
     CHARACTER*256 :: buffer
@@ -52,32 +52,38 @@ CONTAINS
             
             istep0 = 0
             elapsed_time = 0.D0
-              IF ( lflipper) THEN
+            IF ( lflipper) THEN
                 ndof = 3*nr_of_pinballs
-                mynat = nr_of_pinballs
-              ELSE
+            ELSE
                   IF ( ANY( if_pos(:,:) == 0 ) ) THEN
                      ndof = 3*nat - count( if_pos(:,:) == 0 ) - nconstr
                   ELSE
                      ndof = 3*nat - 3 - nconstr
                   ENDIF
-                  mynat = nat
-              END IF
+
+            END IF
+
+            IF (hustler_nat .eq. -1) THEN
+                IF ( lflipper ) THEN
+                    hustler_nat = nr_of_pinballs
+                ELSE
+                    hustler_nat = nat
+                ENDIF
+            ENDIF
 
             READ(UNIT=iunhustle, FMT=*) buffer  ! Read the line of stuff
-            DO i=1, mynat
+            DO i=1, hustler_nat
                 READ(UNIT=iunhustle, FMT=101) atom, x, y ,z
                 tau(1,i) = x / alat
                 tau(2,i) = y / alat
                 tau(3,i) = z / alat
-
             END DO        
             DO na = 1, nat
                 mass(na) = amass( ityp(na) ) * amu_ry
             ENDDO
             tau_new(:,:)= tau(:,:)
-
         END IF
+
 101 format(A,3(1X,f16.10))
 
     END SUBROUTINE init_hustler
@@ -119,25 +125,19 @@ CONTAINS
       IF ( istep0 > nstep ) conv_ions = .true.
 
         READ(UNIT=iunhustle, FMT=*, IOSTAT=io) buffer  ! Read the line of stuff
-        if ( io .ne. 0 ) THEN
+        IF ( io .ne. 0 ) THEN
             conv_ions = .true.
             
-        ElSE IF (lflipper) THEN
-            DO i=1, nr_of_pinballs
+
+        ELSE
+            DO i=1, hustler_nat
                 READ(UNIT=iunhustle, FMT=102) atom, x, y ,z
                 tau_new(1,i) = x / alat
                 tau_new(2,i) = y / alat
                 tau_new(3,i) = z / alat
 
             END DO
-        ELSE
-            DO i=1, nat
-                READ(UNIT=iunhustle, FMT=102) atom, x, y ,z
-                tau_new(1,i) = x / alat
-                tau_new(2,i) = y / alat
-                tau_new(3,i) = z / alat
-            END DO
-        END IF
+        ENDIF
         IF ( istep0 > 0 ) THEN
             vel = ( tau_new - tau_old ) / ( 2.D0*dt )
         ELSE

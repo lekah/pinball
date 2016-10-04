@@ -664,6 +664,7 @@ MODULE read_namelists_module
        CALL mp_bcast( prefix,        ionode_id, intra_image_comm )
        CALL mp_bcast( prefix_flipper_charge, ionode_id, intra_image_comm )                  ! LEONID
        CALL mp_bcast( hustlerfile, ionode_id, intra_image_comm )                  ! LEONID
+       CALL mp_bcast( hustler_nat, ionode_id, intra_image_comm )                  ! LEONID
        CALL mp_bcast( lhustle, ionode_id, intra_image_comm )                  ! LEONID
        CALL mp_bcast( lflipper,      ionode_id, intra_image_comm )                  ! LEONID
        CALL mp_bcast( max_seconds,   ionode_id, intra_image_comm )

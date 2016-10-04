@@ -341,10 +341,22 @@ SUBROUTINE run_pwscf ( exit_status )
         !                    CALL flipper_nl_energy (flipper_nlenergy)  
         CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
         
+        PRINT*, "The non-local contrib.  to forces"
         DO na = 1, nat
-            print*, flipper_forcenl(:, na)
+            WRITE( stdout, 9036) na, ityp(na), ( flipper_forcenl(ipol,na), ipol = 1, 3 )
+
         END DO
         print*, 'ENERGY NON-local', flipper_nlenergy
+        
+        print*, " The ionic contribution  to forces"
+        DO na=1, nat
+            WRITE( stdout, 9036) na, ityp(na), ( flipper_ewald_force(ipol,na), ipol = 1, 3 )
+        END DO
+        print*, "The local contribution  to forces"
+        DO na=1, nat
+            WRITE( stdout, 9036) na, ityp(na), ( flipper_forcelc(ipol,na), ipol = 1, 3 )
+        END DO
+
         !else
          !   flipper_nlenergy=0.d0
          !   flipper_forcenl(:,:)=0.d0
@@ -360,10 +372,16 @@ SUBROUTINE run_pwscf ( exit_status )
         END DO
         
 
+        print*, "Total force"
+        DO na=1, nat
+            WRITE( stdout, 9036) na, ityp(na), ( total_force(ipol,na), ipol = 1, 3 )
+        END DO
+        
         force(:,:)=0.d0
         do iatom=1,nr_of_pinballs
             force(1:3,iatom)=total_force(1:3,iatom)
         end do
+9036 FORMAT(5X,'atom ',I4,' type ',I2,'   force = ',3F14.8)
 
         CALL move_ions()
         !
