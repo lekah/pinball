@@ -73,7 +73,7 @@ CONTAINS
 
             READ(UNIT=iunhustle, FMT=*) buffer  ! Read the line of stuff
             DO i=1, hustler_nat
-                READ(UNIT=iunhustle, FMT=101) atom, x, y ,z
+                READ(UNIT=iunhustle, FMT=*) atom, x, y ,z
                 tau(1,i) = x / alat
                 tau(2,i) = y / alat
                 tau(3,i) = z / alat
@@ -84,7 +84,7 @@ CONTAINS
             tau_new(:,:)= tau(:,:)
         END IF
 
-101 format(A,3(1X,f16.10))
+!~ 101 format(A,3(1X,f16.10))
 
     END SUBROUTINE init_hustler
 
@@ -131,7 +131,7 @@ CONTAINS
 
         ELSE
             DO i=1, hustler_nat
-                READ(UNIT=iunhustle, FMT=102) atom, x, y ,z
+                READ(UNIT=iunhustle, FMT=*) atom, x, y ,z
                 tau_new(1,i) = x / alat
                 tau_new(2,i) = y / alat
                 tau_new(3,i) = z / alat
@@ -214,7 +214,8 @@ CONTAINS
       tau(:,:) = tau_new(:,:)
       
       
-102 format(A,3(1X,f16.10))
+!~ 102 format(A,3(1X,f16.10))
+!~ 102 format(A, f16.10, f16.10, f16.10)
 
 
     END SUBROUTINE hustle_ions
