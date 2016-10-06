@@ -792,7 +792,7 @@ SUBROUTINE electrons_scf ( printout )
 9002 FORMAT(/'     Self-consistent Calculation' )
 
 ! LEONID
-9003 FORMAT( '     ', I5 ,'    ', 0PF17.8,'    ', 0PF17.8)
+9003 FORMAT( '         ', I5 ,'    ', 0PF17.8,'    ', 0PF17.8)
 
 9010 FORMAT(/'     iteration-#',I3)
 9050 FORMAT(/'     WARNING: integrated charge=',F15.8,', expected=',F15.8 )
