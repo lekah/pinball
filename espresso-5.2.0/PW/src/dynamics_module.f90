@@ -23,7 +23,7 @@ MODULE dynamics_module
    USE constants, ONLY : tpi, fpi
    USE constants, ONLY : amu_ry, ry_to_kelvin, au_ps, bohr_radius_cm, ry_kbar
    USE constants, ONLY : eps8
-   USE control_flags, ONLY : tolp, iprint
+   USE control_flags, ONLY : tolp, iprint, conv_elec
    !
    USE basic_algebra_routines
    USE io_files, ONLY : iunpos,iunevp,iunvel, iunfor !aris
@@ -451,7 +451,8 @@ CONTAINS
                   ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
               call write_traj(                                              &
                     istep, elapsed_time, tau, vel, force, ekin, etot,       &
-                    flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs  &
+                    flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                    .true.                                                  &
                 ) !aris ! LEONID: added force and walltime
            endif
       ELSE
@@ -464,7 +465,8 @@ CONTAINS
                   ekin, etot, ( ekin  + etot ), temp_new    
                 call write_traj(                                              &
                         istep, elapsed_time, tau, vel, force, ekin, etot,     &
-                        ekin+etot, temp_new, walltime_s, nat                  &
+                        ekin+etot, temp_new, walltime_s, nat,                 &
+                        conv_elec                                             &
                     ) !aris ! LEONID: added force and walltime
           endif
           IF (lstres) WRITE ( stdout, &
@@ -1749,7 +1751,8 @@ CONTAINS
             istep, time, tau, vel, force,   &
             ekin, etot, conserved_quantity, &
             temp_new, walltime_s,           &
-            nr_of_atoms                     &
+            nr_of_atoms,                    &
+            lelectrons_converged            &
         )
      USE ions_base,          ONLY : nat,atm,ityp !aris
      ! USE ions_base,          ONLY : atm,ityp
@@ -1759,16 +1762,17 @@ CONTAINS
      real(DP) :: tau(3,nat),vel(3,nat), force(3, nat)
      real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris
      integer  :: nr_of_atoms
-     integer ::iat,istep !aris
+     integer :: iat,istep !aris
+     logical :: lelectrons_converged
 
-     if (ionode) then !aris
-        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
+    if (ionode) then !aris
+        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
-        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
+        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
         
-        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
+        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
-        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s
+        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         do iat=1,nr_of_atoms !aris
            write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
@@ -1783,9 +1787,9 @@ CONTAINS
            write(iunfor,101) atm(ityp(iat)), force(1:3,iat)
         end do !aris
 
-     end if !aris
-   100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1)
-   101 format(A,3(1X,f16.10))
+    end if !aris
+100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
+101 format(A,3(1X,f16.10))
    END SUBROUTINE write_traj !aris
    
 END MODULE dynamics_module

@@ -8,20 +8,23 @@ MODULE hustler
     USE kinds,                  ONLY : DP
     USE constants,              ONLY : au_ps, eps8 , ry_to_kelvin ,amu_ry
     USE input_parameters,       ONLY : lflipper, hustler_nat
-    USE dynamics_module,    ONLY : write_traj, tau_new, tau_old, vel, mass, dt, ndof, vel_defined
-    USE flipper_mod,        ONLY : flipper_ewld_energy, &
-                          flipper_energy_external, &
-                          flipper_energy_kin, &
-                          flipper_cons_qty, nr_of_pinballs
-    USE control_flags,      ONLY : iprint, istep
-    USE ener,               ONLY : etot
+    USE dynamics_module,        ONLY : write_traj, tau_new, tau_old, vel, mass, &
+                                        dt, ndof, vel_defined,                  &
+                                        allocate_dyn_vars, deallocate_dyn_vars
+    USE flipper_mod,            ONLY : flipper_ewld_energy, &
+                                      flipper_energy_external, &
+                                      flipper_energy_kin, &
+                                      flipper_cons_qty, nr_of_pinballs
+    USE control_flags,          ONLY : iprint, istep
+    USE ener,                   ONLY : etot
     
-    USE ions_base,      ONLY : nat, nsp, ityp, tau, if_pos, atm, amass
-    USE cell_base,      ONLY : alat, omega
-    USE ener,           ONLY : etot
-    USE force_mod,      ONLY : force, lstres
-    USE control_flags,  ONLY : istep, nstep, conv_ions, lconstrain, tv0rd, &
-                         iverbosity  !LEONID
+    USE ions_base,              ONLY : nat, nsp, ityp, tau, if_pos, atm, amass
+    USE cell_base,              ONLY : alat, omega
+    USE ener,                   ONLY : etot
+    USE force_mod,              ONLY : force, lstres
+    USE control_flags,          ONLY : istep, nstep, conv_ions,                &
+                                        lconstrain, tv0rd,                     &
+                                        iverbosity, conv_elec      !LEONID
     !
     USE constraints_module, ONLY : nconstr, check_constraint
     USE constraints_module, ONLY : remove_constr_force, remove_constr_vec
@@ -29,8 +32,8 @@ MODULE hustler
     REAL(DP) :: total_mass, temp_new, temp_av, elapsed_time
 
 
-    INTEGER :: istep0 = 0 
-!~     INTEGER :: mynat
+    INTEGER :: istep0 = 0
+
     INTEGER :: i !, j
     CHARACTER*3 :: atom
     CHARACTER*256 :: buffer
@@ -48,8 +51,8 @@ CONTAINS
         IF ( ionode ) THEN
             write(UNIT=stdout, FMT=*) "   OPENING HUSTLER file ", hustlerfile
             OPEN(UNIT=iunhustle,FILE=trim(tmp_dir)//'../'//trim(hustlerfile),FORM="FORMATTED",STATUS="OLD",ACTION="READ")
-        
-            
+
+            ! call allocate_dyn_vars()
             istep0 = 0
             elapsed_time = 0.D0
             IF ( lflipper) THEN
@@ -120,9 +123,9 @@ CONTAINS
       INTEGER :: io
 
 
-      print*, "ISTEP0", istep0
+        print*, "HUSTLER (ISTEP0", istep0, ") UPDATING POSITIONS"
 
-      IF ( istep0 > nstep ) conv_ions = .true.
+        IF ( istep0 > nstep ) conv_ions = .true.
 
         READ(UNIT=iunhustle, FMT=*, IOSTAT=io) buffer  ! Read the line of stuff
         IF ( io .ne. 0 ) THEN
@@ -145,75 +148,68 @@ CONTAINS
         END IF
 
     ! LEONID: Computing kinetic energy and temperature for the flipper
-      if (lflipper) then
-          flipper_energy_kin= 0.D0  ! LEONID: Here we calculate the kinetic energy of the flipper
-          ! LEONID: Only the pinballs contribute:
-          DO na = 1, nr_of_pinballs
-             !
-             ! ml(:) = ml(:) + vel(:,na) * mass(na)
-             flipper_energy_kin  = flipper_energy_kin + 0.5D0 * mass(na) * &
-                            ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
-            ! print*, flipper_energy_kin, mass(na)
-          ENDDO
+        if (lflipper) then
+            flipper_energy_kin= 0.D0  ! LEONID: Here we calculate the kinetic energy of the flipper
+            ! LEONID: Only the pinballs contribute:
+            DO na = 1, nr_of_pinballs
+                !
+                ! ml(:) = ml(:) + vel(:,na) * mass(na)
+                flipper_energy_kin  = flipper_energy_kin + 0.5D0 * mass(na) * &
+                                ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
+                ! print*, flipper_energy_kin, mass(na)
+            ENDDO
           
-          flipper_energy_kin = flipper_energy_kin * alat**2
-
-          ekin = flipper_energy_kin
-          etot = flipper_energy_external + flipper_ewld_energy
-          flipper_cons_qty  =  ekin + etot
-      else
-          ml   = 0.D0
-          ekin = 0.D0
- !         kstress = 0.d0
-          !
-          DO na = 1, nat
-             !
-!             ml(:) = ml(:) + vel(:,na) * mass(na)
-             ekin  = ekin + 0.5D0 * mass(na) * &
+            flipper_energy_kin = flipper_energy_kin * alat**2
+            
+            ekin = flipper_energy_kin
+            etot = flipper_energy_external + flipper_ewld_energy
+            flipper_cons_qty  =  ekin + etot
+        else
+            ml   = 0.D0
+            ekin = 0.D0
+            DO na = 1, nat
+                ekin  = ekin + 0.5D0 * mass(na) * &
                             ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
-!~              do i = 1, 3
-!~                  do j = 1, 3
-!~                      kstress(i,j) = kstress(i,j) + mass(na)*vel(i,na)*vel(j,na)
-!~                  enddo
-!~              enddo
-!~              !
-          ENDDO
-          !
-          ekin = ekin*alat**2
-      end if    
+            ENDDO
+            !
+            ekin = ekin*alat**2
+        end if    
 
-      temp_new = 2.D0 / dble( ndof ) * ekin * ry_to_kelvin
-      temp_av = temp_av + temp_new
-      walltime_s = get_clock( 'PWSCF' )
+        temp_new = 2.D0 / dble( ndof ) * ekin * ry_to_kelvin
+        temp_av = temp_av + temp_new
+        walltime_s = get_clock( 'PWSCF' )
 
-      IF (mod(istep, iprint) .eq. 0) THEN
-          IF (lflipper) THEN
-              call write_traj(                                              &
+        IF (mod(istep0, iprint) .eq. 0) THEN
+            IF (lflipper) THEN
+                call write_traj(                                              &
                     istep, elapsed_time, tau, vel, force, ekin, etot,       &
-                    flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs  &
+                    flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                    conv_elec                                               &
                 ) !aris ! LEONID: added force and walltime
-          ELSE
-              call write_traj(                                              &
+            ELSE
+                call write_traj(                                              &
                       istep, elapsed_time, tau, vel, force, ekin, etot,     &
-                      ekin+etot, temp_new, walltime_s, nat                  &
+                      ekin+etot, temp_new, walltime_s, nat,                 &
+                      conv_elec                                             &
                   ) !aris ! LEONID: added force and walltime
-          END IF
-      END IF
+            END IF
+        ELSE
+            print*, 'NOT PRINTING'
+        END IF
 
-      elapsed_time = elapsed_time + dt*2.D0*au_ps
-      !
-      istep0= istep0+ 1
-      istep = istep + 1
+        elapsed_time = elapsed_time + dt*2.D0*au_ps
+        !
+        istep0= istep0+ 1
+        istep = istep + 1
+        
+        
+        ! ... here the tau are shifted
+        ! LEONID: I moved this to this point, since before, since tau was overwritten with
+        ! future positions before being printed
+        ! 
+        tau_old(:,:) = tau(:,:)
+        tau(:,:) = tau_new(:,:)
 
-
-      ! ... here the tau are shifted
-      ! LEONID: I moved this to this point, since before, since tau was overwritten with
-      ! future positions before being printed
-      ! 
-      tau_old(:,:) = tau(:,:)
-      tau(:,:) = tau_new(:,:)
-      
-      
 !~ 102 format(A,3(1X,f16.10))
 !~ 102 format(A, f16.10, f16.10, f16.10)
 
@@ -222,7 +218,7 @@ CONTAINS
 
     SUBROUTINE end_hustler()
     
-    
+        ! CALL deallocate_dyn_vars()
         IF ( ionode ) THEN
             write(UNIT=stdout, FMT=*) "   CLOSING HUSTLER file ", hustlerfile
             CLOSE(UNIT=iunhustle, STATUS="KEEP")

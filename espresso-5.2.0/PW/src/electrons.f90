@@ -414,7 +414,7 @@ SUBROUTINE electrons_scf ( printout )
      END IF
      iter = iter + 1
      !
-     WRITE( stdout, 9010 ) iter !, ecutwfc, mixing_beta
+     IF ( iverbosity > 0 ) WRITE( stdout, 9010 ) iter !, ecutwfc, mixing_beta
      !
      CALL flush_unit( stdout )
      !
@@ -726,7 +726,7 @@ SUBROUTINE electrons_scf ( printout )
         CALL print_energies ( printout )
      ELSE
         !
-        WRITE(stdout, 9003) etot, dr2
+        WRITE(stdout, 9003) iter, etot, dr2
      END IF
      ! END LEONID
      !
@@ -792,8 +792,7 @@ SUBROUTINE electrons_scf ( printout )
 9002 FORMAT(/'     Self-consistent Calculation' )
 
 ! LEONID
-9003 FORMAT( '         total energy              =',0PF17.8,' Ry' &
-            /'         estimated scf accuracy    <',0PF17.8,' Ry' )
+9003 FORMAT( '     ', I5 ,'    ', 0PF17.8,'    ', 0PF17.8)
 
 9010 FORMAT(/'     iteration-#',I3)
 9050 FORMAT(/'     WARNING: integrated charge=',F15.8,', expected=',F15.8 )

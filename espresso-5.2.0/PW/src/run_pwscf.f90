@@ -276,9 +276,11 @@ SUBROUTINE run_pwscf ( exit_status )
          !
          ! ... code stopped by user or not converged
          !
-         IF ( check_stop_now() .OR. .NOT. conv_elec ) THEN
+         IF (( check_stop_now() .OR. .NOT. conv_elec ) .AND. ( .NOT. lhustle)) THEN
             IF ( check_stop_now() ) exit_status = 255
-            IF ( .NOT. conv_elec )  exit_status =  2
+            !
+            ! I will only exit the calculation if this is not a hustler
+            IF ( .NOT. conv_elec ) exit_status =  2
             ! workaround for the case of a single k-point
             twfcollect = .FALSE.
             CALL punch( 'config' )
