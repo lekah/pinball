@@ -30,6 +30,7 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_ggen_2d
   USE mp_bands,           ONLY : intra_bgrp_comm
   USE tsvdw_module,       ONLY : tsvdw_initialize
+  USE input_parameters,   ONLY : lflipper
   !
   IMPLICIT NONE
   !
@@ -96,7 +97,9 @@ SUBROUTINE init_run()
   !
   CALL hinit0()
   !
-  CALL potinit()
+  IF ( .NOT. lflipper ) THEN
+      CALL potinit()
+  ENDIF
   !
   CALL newd()
   !

@@ -22,7 +22,6 @@ add_vhub_to_deeq.o \
 addusdens.o \
 addusforce.o \
 addusstress.o \
-allocate_flipper.o \
 allocate_fft.o \
 allocate_locpot.o \
 allocate_nlpot.o \
@@ -59,7 +58,6 @@ coset.o \
 d_matrix.o \
 data_structure.o \
 data_structure_custom.o \
-deallocate_flipper.o \
 deriv_drhoc.o \
 divide_class.o \
 divide_class_so.o \
@@ -82,7 +80,6 @@ find_group.o \
 flipper_force_lc.o \
 flipper_force_energy_us.o \
 flipper_force_ewald.o \
-flipper_setlocal.o \
 forces_bp_efield.o \
 force_cc.o \
 force_corr.o \
