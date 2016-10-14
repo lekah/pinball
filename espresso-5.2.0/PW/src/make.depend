@@ -90,7 +90,7 @@ allocate_fft.o : ../../Modules/wavefunctions.o
 allocate_fft.o : pwcom.o
 allocate_fft.o : scf_mod.o
 allocate_flipper.o : ../../Modules/recvec.o
-allocate_flipper.o : flipper_mod.o
+allocate_flipper.o : pinball.o
 allocate_locpot.o : ../../Modules/fft_base.o
 allocate_locpot.o : ../../Modules/ions_base.o
 allocate_locpot.o : ../../Modules/recvec.o
@@ -340,7 +340,7 @@ data_structure_custom.o : ../../Modules/mp_bands.o
 data_structure_custom.o : ../../Modules/recvec.o
 data_structure_custom.o : ../../Modules/stick_set.o
 data_structure_custom.o : pwcom.o
-deallocate_flipper.o : flipper_mod.o
+deallocate_flipper.o : pinball.o
 deriv_drhoc.o : ../../Modules/constants.o
 deriv_drhoc.o : ../../Modules/kind.o
 divide.o : ../../Modules/mp.o
@@ -372,7 +372,7 @@ dynamics_module.o : ../../Modules/io_global.o
 dynamics_module.o : ../../Modules/ions_base.o
 dynamics_module.o : ../../Modules/kind.o
 dynamics_module.o : ../../Modules/random_numbers.o
-dynamics_module.o : flipper_mod.o
+dynamics_module.o : pinball.o
 dynamics_module.o : pwcom.o
 dynamics_module.o : symm_base.o
 efermig.o : ../../Modules/constants.o
@@ -480,15 +480,15 @@ flipper_force_ewald.o : ../../Modules/kind.o
 flipper_force_ewald.o : ../../Modules/mp.o
 flipper_force_ewald.o : ../../Modules/mp_bands.o
 flipper_force_ewald.o : esm.o
-flipper_force_ewald.o : flipper_mod.o
+flipper_force_ewald.o : pinball.o
 flipper_force_lc.o : ../../Modules/constants.o
 flipper_force_lc.o : ../../Modules/fft_base.o
 flipper_force_lc.o : ../../Modules/kind.o
 flipper_force_lc.o : ../../Modules/mp.o
 flipper_force_lc.o : ../../Modules/mp_bands.o
 flipper_force_lc.o : esm.o
-flipper_force_lc.o : flipper_mod.o
-flipper_mod.o : ../../Modules/kind.o
+flipper_force_lc.o : pinball.o
+pinball.o : ../../Modules/kind.o
 flipper_setlocal.o : ../../Modules/cell_base.o
 flipper_setlocal.o : ../../Modules/constants.o
 flipper_setlocal.o : ../../Modules/control_flags.o
@@ -501,7 +501,7 @@ flipper_setlocal.o : ../../Modules/mp_bands.o
 flipper_setlocal.o : ../../Modules/qmmm.o
 flipper_setlocal.o : ../../Modules/recvec.o
 flipper_setlocal.o : esm.o
-flipper_setlocal.o : flipper_mod.o
+flipper_setlocal.o : pinball.o
 flipper_setlocal.o : martyna_tuckerman.o
 flipper_setlocal.o : pwcom.o
 flipper_setlocal.o : scf_mod.o
@@ -794,7 +794,7 @@ hustler.o : ../../Modules/io_global.o
 hustler.o : ../../Modules/ions_base.o
 hustler.o : ../../Modules/kind.o
 hustler.o : ../../Modules/random_numbers.o
-hustler.o : flipper_mod.o
+hustler.o : pinball.o
 hustler.o : pwcom.o
 hustler.o : symm_base.o
 init_at_1.o : ../../Modules/atom.o
@@ -1565,7 +1565,7 @@ run_pwscf.o : ../../Modules/parameters.o
 run_pwscf.o : ../../Modules/qmmm.o
 run_pwscf.o : ../../Modules/recvec.o
 run_pwscf.o : ../../Modules/wavefunctions.o
-run_pwscf.o : flipper_mod.o
+run_pwscf.o : pinball.o
 run_pwscf.o : io_rho_xml.o
 run_pwscf.o : pwcom.o
 run_pwscf.o : scf_mod.o

@@ -1,5 +1,5 @@
 subroutine deallocate_flipper
-use flipper_mod
+use pinball
 
     DEALLOCATE(flipper_ewald_force)                 ! LEONID
     DEALLOCATE(flipper_forcelc)                 ! LEONID

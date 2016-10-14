@@ -30,7 +30,7 @@ SUBROUTINE flipper_setlocal()
   USE martyna_tuckerman, ONLY : wg_corr_loc, do_comp_mt
   USE esm,       ONLY : esm_local, esm_bc, do_comp_esm
   USE qmmm,      ONLY : qmmm_add_mm_field
-  USE flipper_mod
+  USE pinball
   !
   
   

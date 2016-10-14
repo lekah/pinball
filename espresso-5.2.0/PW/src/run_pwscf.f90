@@ -57,7 +57,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE force_mod,      ONLY : force 
   USE wavefunctions_module,  ONLY: psic, evc !Aris
   use wvfct, only : nbnd, wg
-  USE flipper_mod
+  USE pinball
   USE hustler,          ONLY : init_hustler, end_hustler
   
  ! For temp check

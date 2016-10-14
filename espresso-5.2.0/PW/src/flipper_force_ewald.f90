@@ -21,7 +21,7 @@ subroutine flipper_force_ewald (alat, nat, ntyp, ityp, zv, at, bg, tau, &
   USE mp_bands,  ONLY : intra_bgrp_comm
   USE mp,        ONLY : mp_sum
   USE esm,       ONLY : esm_force_ew, do_comp_esm, esm_bc
-  USE flipper_mod
+  USE pinball
   implicit none
   !
   !   First the dummy variables

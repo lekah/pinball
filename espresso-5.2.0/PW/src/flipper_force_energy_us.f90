@@ -33,7 +33,7 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum, mp_get_comm_null
-  USE flipper_mod
+  USE pinball
   !
   IMPLICIT NONE
   !

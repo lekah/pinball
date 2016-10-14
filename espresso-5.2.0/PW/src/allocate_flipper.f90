@@ -1,5 +1,5 @@
 subroutine allocate_flipper
-use flipper_mod
+use pinball
 use gvect, only :ngm
 use ions_base, only: nat
 !

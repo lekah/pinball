@@ -132,7 +132,7 @@ CONTAINS
       !
       USE constraints_module, ONLY : nconstr, check_constraint
       USE constraints_module, ONLY : remove_constr_force, remove_constr_vec
-      USE flipper_mod
+      USE pinball
       USE input_parameters,     ONLY : nstep_thermo
       !
       IMPLICIT NONE
@@ -753,7 +753,7 @@ CONTAINS
          USE cell_base,      ONLY : alat
          USE ions_base,      ONLY : nat, if_pos
          USE random_numbers, ONLY : gauss_dist, set_random_seed
-         USE flipper_mod,    ONLY : nr_of_pinballs  ! LEONID
+         USE pinball,    ONLY : nr_of_pinballs  ! LEONID
          USE input_parameters, ONLY : lflipper      ! LEONID
          !
          IMPLICIT NONE
@@ -1761,7 +1761,7 @@ CONTAINS
      USE ions_base,          ONLY : nat,atm,ityp !aris
      ! USE ions_base,          ONLY : atm,ityp
      USE cell_base,         ONLY : alat !aris
-     ! USE flipper_mod
+     ! USE pinball
 
      real(DP) :: tau(3,nat),vel(3,nat), force(3, nat), force_local(3, nat), force_nonlocal(3, nat), force_ewald(3, nat)
      real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris

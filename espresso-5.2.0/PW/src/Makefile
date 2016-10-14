@@ -82,7 +82,6 @@ find_group.o \
 flipper_force_lc.o \
 flipper_force_energy_us.o \
 flipper_force_ewald.o \
-flipper_mod.o \
 flipper_setlocal.o \
 forces_bp_efield.o \
 force_cc.o \
@@ -149,6 +148,7 @@ paw_exx.o \
 paw_init.o \
 paw_onecenter.o \
 paw_symmetry.o \
+pinball.o \
 plugin_print_energies.o \
 plugin_scf_energy.o \
 plugin_scf_potential.o \

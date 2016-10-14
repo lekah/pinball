@@ -21,7 +21,7 @@ subroutine flipper_force_lc (nat, tau, ityp, alat, omega, ngm, ngl, &
   USE fft_base,  ONLY : dfftp
   
   USE esm,       ONLY : esm_force_lc, esm_bc ! do_comp_esm,
-  USE flipper_mod
+  USE pinball
   implicit none
   !
   !   first the dummy variables

@@ -11,7 +11,7 @@ MODULE hustler
     USE dynamics_module,        ONLY : write_traj, tau_new, tau_old, vel, mass, &
                                         dt, ndof, vel_defined,                  &
                                         allocate_dyn_vars, deallocate_dyn_vars
-    USE flipper_mod,            ONLY : flipper_ewld_energy, flipper_forcelc,    &
+    USE pinball,            ONLY : flipper_ewld_energy, flipper_forcelc,    &
                                        flipper_forcenl, flipper_ewald_force,    &
                                       flipper_energy_external, flipper_energy_kin, &
                                       flipper_cons_qty, flipper_nlenergy,       &
@@ -102,7 +102,7 @@ CONTAINS
 
       
 
-      ! USE flipper_mod
+      ! USE pinball
       ! USE input_parameters,     ONLY : nstep_thermo
       !
       IMPLICIT NONE
