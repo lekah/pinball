@@ -308,83 +308,49 @@ SUBROUTINE run_pwscf ( exit_status )
      ! LEONID
      IF (lflipper) THEN
 
+
+        CALL flipper_forces_potener()
         !
         ! ... initialize the structure factor
         !
-        ntyp_save = ntyp
-        ntyp = 1
-        CALL struc_fact( nat, tau, ntyp, ityp, ngm, g, bg, &
-                   dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
-        CALL flipper_setlocal()
-        ! set ntyp back to what it originally was. Is that necessary?
-        ntyp = ntyp_save
-        
-        flipper_ewld_energy = ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
-                omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
-        
-        if (ionode) print*, 'FLIPPER: TOTAL EXTERMAL ENERGY: ',flipper_energy_external
-        if (ionode) print*, 'FLIPPER: TOTAL EWALD ENERGY: ',flipper_ewld_energy  !Aris
-        
-         CALL flipper_force_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
-                 gg, ngm, gstart, gamma_only, gcutm, strf )
-
-        
-!~         if (ionode) print*, 'CALCULATING LOCAL FORCES'
-!        CALL flipper_force_lc( nat, nr_of_pinballs, tau, ityp, alat, omega, ngm, ngl, igtongl, &
-!                 g, aux_rho_of_g, nl, nspin, gstart, gamma_only, vloc, &
-!                 flipper_forcelc )
-         CALL flipper_force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
-                 g, nl, nspin, gstart, gamma_only, vloc )
-!~         if (ionode) print*, flipper_forcelc
-!~         if (ionode) print*, 'DONE'
-                 
-        ! if (( nkb > 0 ).and. flipper_nonlocal) then
-        CALL init_us_2( npw, igk, xk(1,1), vkb )
-        !                    CALL flipper_nl_energy (flipper_nlenergy)  
-        CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
-        
-        PRINT*, "The non-local contrib.  to forces"
-        DO na = 1, nat
-            WRITE( stdout, 9036) na, ityp(na), ( flipper_forcenl(ipol,na), ipol = 1, 3 )
-
-        END DO
-        print*, 'ENERGY NON-local', flipper_nlenergy
-        
-        print*, " The ionic contribution  to forces"
-        DO na=1, nat
-            WRITE( stdout, 9036) na, ityp(na), ( flipper_ewald_force(ipol,na), ipol = 1, 3 )
-        END DO
-        print*, "The local contribution  to forces"
-        DO na=1, nat
-            WRITE( stdout, 9036) na, ityp(na), ( flipper_forcelc(ipol,na), ipol = 1, 3 )
-        END DO
-
-        !else
-         !   flipper_nlenergy=0.d0
-         !   flipper_forcenl(:,:)=0.d0
-        ! end if
-
-        DO ipol = 1, 3
-             DO na = 1, nr_of_pinballs
-                total_force(ipol,na) = &
-                                flipper_ewald_force(ipol,na)    + &
-                                flipper_forcelc(ipol,na)        + &
-                                flipper_forcenl(ipol, na)
-            END DO
-        END DO
-        
-
-        print*, "Total force"
-        DO na=1, nat
-            WRITE( stdout, 9036) na, ityp(na), ( total_force(ipol,na), ipol = 1, 3 )
-        END DO
-        
-        force(:,:)=0.d0
-        do iatom=1,nr_of_pinballs
-            force(1:3,iatom)=total_force(1:3,iatom)
-        end do
-9036 FORMAT(5X,'atom ',I4,' type ',I2,'   force = ',3F14.8)
-
+!~         ntyp_save = ntyp
+!~         ntyp = 1
+!~         CALL struc_fact( nat, tau, ntyp, ityp, ngm, g, bg, &
+!~                    dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
+!~         CALL flipper_setlocal()
+!~         ! set ntyp back to what it originally was. Is that necessary?
+!~         ntyp = ntyp_save
+!~         
+!~         flipper_ewld_energy = ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
+!~                 omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
+!~         
+!~         
+!~          CALL flipper_force_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
+!~                  gg, ngm, gstart, gamma_only, gcutm, strf )
+!~ 
+!~ 
+!~          CALL flipper_force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
+!~                  g, nl, nspin, gstart, gamma_only, vloc )
+!~ 
+!~         CALL init_us_2( npw, igk, xk(1,1), vkb )
+!~ 
+!~         CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
+!~         
+!~         DO ipol = 1, 3
+!~              DO na = 1, nr_of_pinballs
+!~                 total_force(ipol,na) = &
+!~                                 flipper_ewald_force(ipol,na)    + &
+!~                                 flipper_forcelc(ipol,na)        + &
+!~                                 flipper_forcenl(ipol, na)
+!~             END DO
+!~         END DO
+!~         
+!~         force(:,:)=0.d0
+!~         do iatom=1,nr_of_pinballs
+!~             force(1:3,iatom)=total_force(1:3,iatom)
+!~         end do
+!~ 9036 FORMAT(5X,'atom ',I4,' type ',I2,'   force = ',3F14.8)
+!~ 
         CALL move_ions()
         !
         

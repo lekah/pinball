@@ -235,8 +235,11 @@ MODULE force_mod
   !
   SAVE
   !
-  REAL(DP), ALLOCATABLE :: &
-       force(:,:)       ! the force on each atom
+  REAL(DP), ALLOCATABLE ::  &
+       force(:,:),          & ! the force on each atom
+       forcelc(:,:),        & ! The local contribution
+       forcenl(:,:),        & ! The non-local contribution
+       forceion(:,:)         ! The ewald contribution
   REAL(DP) :: &
        sigma(3,3)       ! the stress acting on the system
   LOGICAL :: &

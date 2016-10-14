@@ -32,7 +32,7 @@ SUBROUTINE forces()
   USE lsda_mod,      ONLY : nspin
   USE symme,         ONLY : symvector
   USE vlocal,        ONLY : strf, vloc
-  USE force_mod,     ONLY : force, lforce
+  USE force_mod,     ONLY : force, lforce, forcelc, forcenl, forceion
   USE scf,           ONLY : rho
   USE ions_base,     ONLY : if_pos
   USE ldaU,          ONLY : lda_plus_u, U_projection
@@ -50,16 +50,16 @@ SUBROUTINE forces()
   !
   IMPLICIT NONE
   !
-  REAL(DP), ALLOCATABLE :: forcenl(:,:), &
-                           forcelc(:,:), &
-                           forcecc(:,:), &
-                           forceion(:,:), &
+  REAL(DP), ALLOCATABLE :: forcecc(:,:), &
                            force_disp(:,:),&
                            force_disp_xdm(:,:),&
                            force_mt(:,:), &
                            forcescc(:,:), &
                            forces_bp_efield(:,:), &
                            forceh(:,:)
+!~                         & !forcenl(:,:), &
+!~                            & !forcelc(:,:), &
+!~                            & ! forceion(:,:), &
     ! nonlocal, local, core-correction, ewald, scf correction terms, and hubbard
 !
 ! aux is used to store a possible additional density
@@ -76,8 +76,8 @@ SUBROUTINE forces()
   !
   CALL start_clock( 'forces' )
   !
-  ALLOCATE( forcenl( 3, nat ), forcelc( 3, nat ), forcecc( 3, nat ), &
-            forceh( 3, nat ), forceion( 3, nat ), forcescc( 3, nat ) )
+  ALLOCATE( forcecc( 3, nat ), forceh( 3, nat ), forcescc( 3, nat ) ) 
+!~             forceion( 3, nat ), forcenl( 3, nat ), forcelc( 3, nat ), 
   !    
   forcescc(:,:) = 0.D0
   forceh(:,:)   = 0.D0
@@ -338,7 +338,8 @@ SUBROUTINE forces()
      !
   END IF
   !
-  DEALLOCATE( forcenl, forcelc, forcecc, forceh, forceion, forcescc )
+!~   DEALLOCATE( forcenl, forcelc, forcecc, forceh, forceion, forcescc )
+  DEALLOCATE( forcecc, forceh, forcescc )
   IF ( llondon )  DEALLOCATE ( force_disp )
   IF ( lxdm ) DEALLOCATE( force_disp_xdm ) 
   IF ( lelfield ) DEALLOCATE ( forces_bp_efield )

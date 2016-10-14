@@ -11,17 +11,18 @@ MODULE hustler
     USE dynamics_module,        ONLY : write_traj, tau_new, tau_old, vel, mass, &
                                         dt, ndof, vel_defined,                  &
                                         allocate_dyn_vars, deallocate_dyn_vars
-    USE flipper_mod,            ONLY : flipper_ewld_energy, &
-                                      flipper_energy_external, &
-                                      flipper_energy_kin, &
-                                      flipper_cons_qty, nr_of_pinballs
+    USE flipper_mod,            ONLY : flipper_ewld_energy, flipper_forcelc,    &
+                                       flipper_forcenl, flipper_ewald_force,    &
+                                      flipper_energy_external, flipper_energy_kin, &
+                                      flipper_cons_qty, flipper_nlenergy,       &
+                                      nr_of_pinballs
     USE control_flags,          ONLY : iprint, istep
     USE ener,                   ONLY : etot
     
     USE ions_base,              ONLY : nat, nsp, ityp, tau, if_pos, atm, amass
     USE cell_base,              ONLY : alat, omega
     USE ener,                   ONLY : etot
-    USE force_mod,              ONLY : force, lstres
+    USE force_mod,              ONLY : force, lstres, forcelc, forcenl, forceion
     USE control_flags,          ONLY : istep, nstep, conv_ions,                &
                                         lconstrain, tv0rd,                     &
                                         iverbosity, conv_elec      !LEONID
@@ -46,7 +47,7 @@ MODULE hustler
 CONTAINS 
 
     SUBROUTINE init_hustler()
-    
+        
     
         IF ( ionode ) THEN
             write(UNIT=stdout, FMT=*) "   OPENING HUSTLER file ", hustlerfile
@@ -162,7 +163,7 @@ CONTAINS
             flipper_energy_kin = flipper_energy_kin * alat**2
             
             ekin = flipper_energy_kin
-            etot = flipper_energy_external + flipper_ewld_energy
+            etot = flipper_energy_external + flipper_ewld_energy + flipper_nlenergy
             flipper_cons_qty  =  ekin + etot
         else
             ml   = 0.D0
@@ -181,16 +182,17 @@ CONTAINS
 
         IF (mod(istep0, iprint) .eq. 0) THEN
             IF (lflipper) THEN
-                call write_traj(                                              &
-                    istep, elapsed_time, tau, vel, force, ekin, etot,       &
+                call write_traj(                                            &
+                    istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
+                    flipper_forcenl, flipper_ewald_force, ekin, etot,       &
                     flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
                     conv_elec                                               &
                 ) !aris ! LEONID: added force and walltime
             ELSE
                 call write_traj(                                              &
-                      istep, elapsed_time, tau, vel, force, ekin, etot,     &
-                      ekin+etot, temp_new, walltime_s, nat,                 &
-                      conv_elec                                             &
+                      istep, elapsed_time, tau, vel, force, forcelc, forcenl, &
+                      forceion, ekin, etot, ekin+etot, temp_new, walltime_s,  &
+                      nat, conv_elec                                          &
                   ) !aris ! LEONID: added force and walltime
             END IF
         ELSE

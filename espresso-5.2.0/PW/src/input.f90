@@ -77,7 +77,7 @@ SUBROUTINE iosys()
                             prefix_     => prefix, &
                             pseudo_dir_ => pseudo_dir
   !
-  USE force_mod,     ONLY : lforce, lstres, force
+  USE force_mod,     ONLY : lforce, lstres, force, forcelc, forcenl, forceion
   !
   USE gvecs,         ONLY : dual
   USE gvect,         ONLY : ecutrho_ => ecutrho
@@ -1305,6 +1305,9 @@ SUBROUTINE iosys()
   ALLOCATE( ityp( nat_ ) )
   ALLOCATE( tau(    3, nat_ ) )
   ALLOCATE( force(  3, nat_ ) )
+  ALLOCATE( forcelc(  3, nat_ ) )
+  ALLOCATE( forcenl(  3, nat_ ) )
+  ALLOCATE( forceion(  3, nat_ ) )
   ALLOCATE( if_pos( 3, nat_ ) )
   ALLOCATE( extfor( 3, nat_ ) )
 

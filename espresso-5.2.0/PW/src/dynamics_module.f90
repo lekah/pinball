@@ -126,7 +126,7 @@ CONTAINS
       USE ions_base,      ONLY : nat, nsp, ityp, tau, if_pos, atm
       USE cell_base,      ONLY : alat, omega
       USE ener,           ONLY : etot
-      USE force_mod,      ONLY : force, lstres
+      USE force_mod,      ONLY : force, lstres, forcelc, forcenl, forceion
       USE control_flags,  ONLY : istep, nstep, conv_ions, lconstrain, tv0rd, &
                                  iverbosity  !LEONID
       !
@@ -450,7 +450,8 @@ CONTAINS
                              & 5X,"temperature           = ",F14.8," K ")' ) &
                   ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
               call write_traj(                                              &
-                    istep, elapsed_time, tau, vel, force, ekin, etot,       &
+                    istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
+                    flipper_forcenl, flipper_ewald_force, ekin, etot,       &
                     flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
                     .true.                                                  &
                 ) !aris ! LEONID: added force and walltime
@@ -464,7 +465,8 @@ CONTAINS
                              & 10X,"temperature         = ",F14.8," K ")' ) &
                   ekin, etot, ( ekin  + etot ), temp_new    
                 call write_traj(                                              &
-                        istep, elapsed_time, tau, vel, force, ekin, etot,     &
+                        istep, elapsed_time, tau, vel,                        &  
+                        force, forcelc, forcenl, forceion,ekin, etot,         &
                         ekin+etot, temp_new, walltime_s, nat,                 &
                         conv_elec                                             &
                     ) !aris ! LEONID: added force and walltime
@@ -1749,6 +1751,8 @@ CONTAINS
 !to change printing flipper quantities and temperature
    SUBROUTINE write_traj(                   &
             istep, time, tau, vel, force,   &
+            force_local, force_nonlocal,    &
+            force_ewald,                    &
             ekin, etot, conserved_quantity, &
             temp_new, walltime_s,           &
             nr_of_atoms,                    &
@@ -1759,7 +1763,7 @@ CONTAINS
      USE cell_base,         ONLY : alat !aris
      ! USE flipper_mod
 
-     real(DP) :: tau(3,nat),vel(3,nat), force(3, nat)
+     real(DP) :: tau(3,nat),vel(3,nat), force(3, nat), force_local(3, nat), force_nonlocal(3, nat), force_ewald(3, nat)
      real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris
      integer  :: nr_of_atoms
      integer :: iat,istep !aris
@@ -1784,12 +1788,13 @@ CONTAINS
         
 
         do iat=1,nr_of_atoms
-           write(iunfor,101) atm(ityp(iat)), force(1:3,iat)
+           write(iunfor,102) atm(ityp(iat)), force(1:3,iat), force_local(1:3, iat), force_nonlocal(1:3, iat), force_ewald(1:3, iat)
         end do !aris
 
     end if !aris
 100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
 101 format(A,3(1X,f16.10))
+102 format(A,12(1X,f16.10))
    END SUBROUTINE write_traj !aris
    
 END MODULE dynamics_module

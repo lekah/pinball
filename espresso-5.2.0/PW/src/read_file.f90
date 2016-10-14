@@ -97,7 +97,7 @@ SUBROUTINE read_xml_file_internal(withbs)
   USE kinds,                ONLY : DP
   USE ions_base,            ONLY : nat, nsp, ityp, tau, if_pos, extfor
   USE cell_base,            ONLY : tpiba2, alat,omega, at, bg, ibrav
-  USE force_mod,            ONLY : force
+  USE force_mod,            ONLY : force, forcelc, forcenl, forceion
   USE klist,                ONLY : nkstot, nks, xk, wk
   USE lsda_mod,             ONLY : lsda, nspin, current_spin, isk
   USE wvfct,                ONLY : nbnd, nbndx, et, wg, ecutwfc
@@ -180,6 +180,9 @@ SUBROUTINE read_xml_file_internal(withbs)
   ALLOCATE( tau(    3, nat ) )
   ALLOCATE( if_pos( 3, nat ) )
   ALLOCATE( force(  3, nat ) )
+  ALLOCATE( forcelc(  3, nat ) )
+  ALLOCATE( forcenl(  3, nat ) )
+  ALLOCATE( forceion(  3, nat ) )
   ALLOCATE( extfor(  3, nat ) )
   !
   IF ( tefield ) ALLOCATE( forcefield( 3, nat ) )

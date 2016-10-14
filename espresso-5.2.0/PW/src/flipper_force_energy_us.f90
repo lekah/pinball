@@ -156,10 +156,12 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
        ! ... 3) the band group is subsequently used to parallelize over bands
        !
        !
-       DO nt = 1, ntyp
+!~        DO nt = 1, ntyp
+       ! LEONID sinc this is a pinball, I only take into account the first type
+       DO nt = 1, 1
           IF ( nh(nt) == 0 ) CYCLE
           ALLOCATE ( aux(nh(nt),becp%nbnd_loc) )
-          DO na = 1, nat
+          DO na = 1, nr_of_pinballs
              IF ( ityp(na) == nt ) THEN
                 ijkb0 = indv_ijkb0(na)
                 ! this is \sum_j q_{ij} <beta_j|psi>
@@ -307,11 +309,11 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
        ! ... 3) the band group is subsequently used to parallelize over bands
        !
        !
-       DO nt = 1, ntyp
-          print*, '!!!!!!!!!!!!!!!', nh(nt)
+       DO nt = 1, 1
+!~           print*, '!!!!!!!!!!!!!!!', nh(nt)
           IF ( nh(nt) == 0 ) CYCLE
           ALLOCATE ( aux(nh(nt),becp%nbnd_loc) )
-          DO na = 1, nat
+          DO na = 1, nr_of_pinballs
              IF ( ityp(na) == nt ) THEN
                 ijkb0 = indv_ijkb0(na)
                 !trick for using old code, maybe putting 0.d0 in DGEMM is nicer
@@ -323,9 +325,7 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
                 DO ih = 1, nh(nt)
                    DO ibnd_loc = 1, becp%nbnd_loc
                       ibnd = ibnd_loc + becp%ibnd_begin - 1
-!~                       print*, 'HELLO', aux(ih,ibnd_loc),  dbecp%r(ijkb0+ih,ibnd_loc), wg(ibnd,ik)
                       ener = ener + &
-                           !2.0_dp * tpiba * aux(ih,ibnd_loc) * &
                             aux(ih,ibnd_loc) * & !levato il fattore tpiba per l'energia
                            !ed il fattore due che spero sia dovuto al fatto che i termini nel calcolo delle forze
                            !sono due termini uguali mentre nell'energia sono lo stesso

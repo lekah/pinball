@@ -30,7 +30,7 @@ SUBROUTINE clean_pw( lflag )
   USE gvect,                ONLY : ig_l2g
   USE vlocal,               ONLY : strf, vloc
   USE wvfct,                ONLY : igk, g2kin, et, wg, btype
-  USE force_mod,            ONLY : force
+  USE force_mod,            ONLY : force, forcelc, forcenl, forceion
   USE scf,                  ONLY : rho, v, vltot, rho_core, rhog_core, &
                                    vrs, kedtau, destroy_scf_type, vnew, &
                                    charge_density               ! LEONID
@@ -84,6 +84,9 @@ SUBROUTINE clean_pw( lflag )
      CALL deallocate_ions_base()
      !
      IF ( ALLOCATED( force ) )      DEALLOCATE( force )
+     IF ( ALLOCATED( forcelc ) )      DEALLOCATE( forcelc )
+     IF ( ALLOCATED( forcenl ) )      DEALLOCATE( forcenl )
+     IF ( ALLOCATED( forceion ) )      DEALLOCATE( forceion )
      IF ( ALLOCATED( forcefield ) ) DEALLOCATE( forcefield )
      IF ( ALLOCATED( irt ) )        DEALLOCATE( irt )
      !
