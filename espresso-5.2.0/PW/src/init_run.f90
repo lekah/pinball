@@ -30,7 +30,9 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_ggen_2d
   USE mp_bands,           ONLY : intra_bgrp_comm
   USE tsvdw_module,       ONLY : tsvdw_initialize
-  USE input_parameters,   ONLY : lflipper
+  USE pinball,            ONLY : init_flipper
+  USE input_parameters,   ONLY : lflipper, lhustle
+  USE hustler,            ONLY : init_hustler
   !
   IMPLICIT NONE
   !
@@ -100,10 +102,16 @@ SUBROUTINE init_run()
   IF ( .NOT. lflipper ) THEN
       CALL potinit()
   ENDIF
-  !
-  CALL newd()
-  !
-  CALL wfcinit()
+    !
+    CALL newd()
+    !
+  IF ( .NOT. lflipper ) THEN
+    CALL wfcinit()
+  ELSE
+    CALL init_flipper()  
+  ENDIF
+
+  print*, "HERHE"
   !
   IF(use_wannier) CALL wannier_init()
   !
@@ -113,6 +121,8 @@ SUBROUTINE init_run()
 #endif
   !
   IF ( lmd ) CALL allocate_dyn_vars()
+  
+  if ( lhustle )  CALL init_hustler()
   !
   CALL stop_clock( 'init_run' )
   !

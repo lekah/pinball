@@ -23,6 +23,7 @@ SUBROUTINE close_files(lflag)
   USE wannier_new,   ONLY : use_wannier
   USE bp,            ONLY : lelfield
   USE io_global,     ONLY : ionode !aris
+  USE input_parameters, ONLY : lflipper
   !
   IMPLICIT NONE
   !
@@ -30,7 +31,7 @@ SUBROUTINE close_files(lflag)
   
   !
   LOGICAL :: opnd
-    !aris
+
    if (ionode) then !aris
       INQUIRE( UNIT = iunevp, OPENED = opnd ) !aris
       if (opnd) close(iunevp) !aris
@@ -43,11 +44,14 @@ SUBROUTINE close_files(lflag)
   !  ... close buffer/file containing wavefunctions: discard if
   !  ... wavefunctions are written in xml format, save otherwise
   !
-  IF ( lflag .AND. (twfcollect .OR. io_level < 0 )) THEN
-     CALL close_buffer ( iunwfc, 'DELETE' )
-  ELSE
-     CALL close_buffer ( iunwfc, 'KEEP' )
-  END IF
+  
+  IF ( .NOT. lflipper) THEN
+      IF ( lflag .AND. (twfcollect .OR. io_level < 0 )) THEN
+         CALL close_buffer ( iunwfc, 'DELETE' )
+      ELSE
+         CALL close_buffer ( iunwfc, 'KEEP' )
+      END IF
+  ENDIF
   !
   ! ... iunigk is kept open during the execution - close and remove
   !

@@ -157,13 +157,8 @@ SUBROUTINE run_pwscf ( exit_status )
      exit_status = 255
      RETURN
   ENDIF
-  !
-  
-  IF (lflipper) THEN
-      CALL init_flipper()
-  END IF
-  
-  if ( lhustle )  CALL init_hustler()
+
+
   
   
   main_loop: DO
@@ -314,14 +309,8 @@ SUBROUTINE run_pwscf ( exit_status )
          !
      END IF
   END DO main_loop
-  
-  
-!  IF (lflipper)  DEALLOCATE(flipper_ewald_force)                 ! LEONID
-!  IF (lflipper)  DEALLOCATE(flipper_forcelc)                 ! LEONID
-!  IF (lflipper)  DEALLOCATE(total_force)                 ! LEONID
+
   IF (lflipper)  then 
-!      DEALLOCATE(aux_rho_of_g)                 ! LEONID
-!      DEALLOCATE(aux_rho_of_r)                 ! LEONID
       call deallocate_flipper()
   END IF
   
@@ -330,9 +319,12 @@ SUBROUTINE run_pwscf ( exit_status )
   ! ... save final data file
   !
   IF ( .not. lmd) CALL pw2casino()
-  CALL punch('all')
-  !
-  CALL qmmm_shutdown()
+  
+  IF ( .NOT. lflipper) THEN
+    CALL punch('all')
+    CALL qmmm_shutdown()
+  ENDIF
+  
   !
   IF ( .NOT. conv_ions )  exit_status =  3
   RETURN

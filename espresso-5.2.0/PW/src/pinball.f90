@@ -28,28 +28,28 @@ MODULE pinball
   CONTAINS
 
     SUBROUTINE init_flipper()
-        USE scf,              ONLY : rho, charge_density
-        USE fft_base,         ONLY : dfftp
-        USE ions_base,                  ONLY : ityp, nat
-        use wvfct,                      only : nbnd, wg
-        USE mp_bands,         ONLY : intra_bgrp_comm
-        USE io_global,        ONLY : stdout, ionode
-        USE fft_base,        ONLY : dffts
-        USE gvecs,           ONLY : nls, nlsm
-        USE wvfct,           ONLY : npw, igk
-        USE fft_interfaces,  ONLY : invfft
-        USE cell_base,       ONLY : omega
-        use io_files,        ONLY : nwordwfc,diropn,iunwfc
-        USE io_files,         ONLY : prefix
-        USE input_parameters, ONLY : prefix_flipper_charge
-        USE lsda_mod,         ONLY : nspin
-        USE wavefunctions_module,  ONLY: psic, evc !Aris
-        USE gvect,            ONLY :  ngm, gstart, g, eigts1, &
-                                eigts2, eigts3, gcutm, &
-                                gg,ngl, nl, igtongl                     ! LEONID
-        USE fft_interfaces,   ONLY : fwfft
+        USE scf,                ONLY : rho, charge_density
+        USE fft_base,           ONLY : dfftp
+        USE ions_base,          ONLY : ityp, nat
+        use wvfct,              only : nbnd, wg
+        USE mp_bands,           ONLY : intra_bgrp_comm
+        USE io_global,          ONLY : stdout, ionode
+        USE fft_base,           ONLY : dffts
+        USE gvecs,              ONLY : nls, nlsm
+        USE wvfct,              ONLY : npw, igk
+        USE fft_interfaces,     ONLY : invfft
+        USE cell_base,          ONLY : omega
+        use io_files,           ONLY : nwordwfc, diropn, iunwfc
+        USE io_files,           ONLY : prefix
+        USE input_parameters,   ONLY : prefix_flipper_charge
+        USE lsda_mod,           ONLY : nspin
+        USE wavefunctions_module,  ONLY: psic, evc
+        USE gvect,              ONLY :  ngm, gstart, g, eigts1, &
+                                    eigts2, eigts3, gcutm, &
+                                    gg,ngl, nl, igtongl
+        USE fft_interfaces,     ONLY : fwfft
         USE mp,                 ONLY : mp_sum
-        USE io_rho_xml,       ONLY : read_rho
+        USE io_rho_xml,         ONLY : read_rho
 
         IMPLICIT NONE
         
@@ -79,14 +79,14 @@ MODULE pinball
         end if
         call allocate_flipper()   
 
-         normal_prefix = prefix
-         prefix = prefix_flipper_charge 
-         print*, '&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
+!~          normal_prefix = prefix
+!~          prefix = prefix_flipper_charge 
+!~          print*, '&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
          CALL read_rho(charge_density, nspin)
 
         iun=find_free_unit()
         
-        print*, '!!!!!!!!!', prefix
+!~         print*, '!!!!!!!!!', prefix
         call diropn(iun, 'wfc', 2*nwordwfc, exst )
         call davcio (evc, 2*nwordwfc, iun, 1,-1) 
     !~     call davcio (evc, 2*nwordwfc, iunwfc, 1,-1) 
@@ -132,17 +132,9 @@ MODULE pinball
         deallocate(charge2)
         ! temp END
          print*, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-        
-        
-         prefix = normal_prefix
-         
-    !     aux_rho_of_r(1:dfftp%nnr,1:nspin) = charge_density%of_r(1:dfftp%nnr,1:nspin)
-         
-    !     aux_rho_of_g(:) = CMPLX( aux_rho_of_r(:,1), 0.0_dp, kind=dp )
-        
+
          psic(:)=(0.d0,0.d0)
-             
-    !~      CALL fwfft ('Dense', aux_rho_of_g, dfftp)
+
          psic(1:dfftp%nnr)=dcmplx(charge_density%of_r(1:dfftp%nnr,1)) 
          CALL fwfft ('Dense', psic, dfftp)
          DO igm=1,ngm 
