@@ -28,7 +28,7 @@ MODULE dynamics_module
    USE basic_algebra_routines
    USE io_files, ONLY : iunpos,iunevp,iunvel, iunfor !aris
    USE io_global, ONLY : ionode !aris
-   use input_parameters, ONLY : lflipper
+   use pinball, ONLY : lflipper
    !
    IMPLICIT NONE
    !
@@ -133,7 +133,7 @@ CONTAINS
       USE constraints_module, ONLY : nconstr, check_constraint
       USE constraints_module, ONLY : remove_constr_force, remove_constr_vec
       USE pinball
-      USE input_parameters,     ONLY : nstep_thermo
+      USE input_parameters,     ONLY : nstep_thermo, ldecompose_forces
       !
       IMPLICIT NONE
       !
@@ -453,7 +453,7 @@ CONTAINS
                     istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
                     flipper_forcenl, flipper_ewald_force, ekin, etot,       &
                     flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
-                    .true.                                                  &
+                    .false., ldecompose_forces                              &
                 ) !aris ! LEONID: added force and walltime
            endif
       ELSE
@@ -468,7 +468,7 @@ CONTAINS
                         istep, elapsed_time, tau, vel,                        &  
                         force, forcelc, forcenl, forceion,ekin, etot,         &
                         ekin+etot, temp_new, walltime_s, nat,                 &
-                        conv_elec                                             &
+                        conv_elec, ldecompose_forces                          &
                     ) !aris ! LEONID: added force and walltime
           endif
           IF (lstres) WRITE ( stdout, &
@@ -753,8 +753,7 @@ CONTAINS
          USE cell_base,      ONLY : alat
          USE ions_base,      ONLY : nat, if_pos
          USE random_numbers, ONLY : gauss_dist, set_random_seed
-         USE pinball,    ONLY : nr_of_pinballs  ! LEONID
-         USE input_parameters, ONLY : lflipper      ! LEONID
+         USE pinball,    ONLY : nr_of_pinballs, lflipper  ! LEONID
          !
          IMPLICIT NONE
          !
@@ -1756,7 +1755,8 @@ CONTAINS
             ekin, etot, conserved_quantity, &
             temp_new, walltime_s,           &
             nr_of_atoms,                    &
-            lelectrons_converged            &
+            lelectrons_converged,           &
+            ldecompose_forces               &
         )
      USE ions_base,          ONLY : nat,atm,ityp !aris
      ! USE ions_base,          ONLY : atm,ityp
@@ -1767,7 +1767,7 @@ CONTAINS
      real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris
      integer  :: nr_of_atoms
      integer :: iat,istep !aris
-     logical :: lelectrons_converged
+     logical :: lelectrons_converged, ldecompose_forces
 
     if (ionode) then !aris
         write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
@@ -1782,15 +1782,27 @@ CONTAINS
            write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
         end do !aris
         
+        
         do iat=1,nr_of_atoms !aris
            write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat)
         end do !aris
         
 
-        do iat=1,nr_of_atoms
-           write(iunfor,102) atm(ityp(iat)), force(1:3,iat), force_local(1:3, iat), force_nonlocal(1:3, iat), force_ewald(1:3, iat)
-        end do !aris
-
+        IF ( ldecompose_forces ) THEN
+            DO iat=1,nr_of_atoms
+               write(iunfor,102) &
+                        atm(ityp(iat)), &
+                        force(1:3,iat), &
+                        force_local(1:3, iat), &
+                        force_nonlocal(1:3, iat), &
+                        force_ewald(1:3, iat)
+            ENDDO
+        ELSE
+            DO iat=1,nr_of_atoms
+               write(iunfor,101) atm(ityp(iat)), force(1:3,iat)
+            ENDDO
+        ENDIF
+        
     end if !aris
 100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
 101 format(A,3(1X,f16.10))

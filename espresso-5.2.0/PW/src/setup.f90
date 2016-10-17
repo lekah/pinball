@@ -81,7 +81,7 @@ SUBROUTINE setup()
   USE funct,              ONLY : dft_is_meta, dft_is_hybrid, dft_is_gradient
   USE paw_variables,      ONLY : okpaw
   USE cellmd,             ONLY : lmovecell
-  USE input_parameters,   ONLY : lflipper ! LEONID added this so we can set okpaw to false if we are running the flipper
+  USE pinball,            ONLY : lflipper ! LEONID added this so we can set okpaw to false if we are running the flipper
   !
   IMPLICIT NONE
   !

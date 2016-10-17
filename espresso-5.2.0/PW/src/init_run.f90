@@ -30,9 +30,8 @@ SUBROUTINE init_run()
   USE esm,                ONLY : do_comp_esm, esm_ggen_2d
   USE mp_bands,           ONLY : intra_bgrp_comm
   USE tsvdw_module,       ONLY : tsvdw_initialize
-  USE pinball,            ONLY : init_flipper
-  USE input_parameters,   ONLY : lflipper, lhustle
-  USE hustler,            ONLY : init_hustler
+  USE pinball,            ONLY : init_flipper, lflipper
+  USE hustler,            ONLY : lhustle, init_hustler
   !
   IMPLICIT NONE
   !

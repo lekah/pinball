@@ -47,8 +47,7 @@ SUBROUTINE move_ions()
   USE dynamics_module,        ONLY : verlet, langevin_md, proj_verlet
   USE dynamics_module,        ONLY : smart_MC
   USE dfunct,                 only : newd
-  USE input_parameters,       only : lhustle
-  USE hustler,                only : hustle_ions
+  USE hustler,                only : lhustle, hustle_ions
   !
   IMPLICIT NONE
   !

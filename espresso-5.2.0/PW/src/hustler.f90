@@ -7,15 +7,17 @@ MODULE hustler
     USE io_global,              ONLY : stdout, ionode
     USE kinds,                  ONLY : DP
     USE constants,              ONLY : au_ps, eps8 , ry_to_kelvin ,amu_ry
-    USE input_parameters,       ONLY : lflipper, hustler_nat
+    USE input_parameters,       ONLY : ldecompose_forces
     USE dynamics_module,        ONLY : write_traj, tau_new, tau_old, vel, mass, &
                                         dt, ndof, vel_defined,                  &
                                         allocate_dyn_vars, deallocate_dyn_vars
-    USE pinball,            ONLY : flipper_ewld_energy, flipper_forcelc,    &
-                                       flipper_forcenl, flipper_ewald_force,    &
-                                      flipper_energy_external, flipper_energy_kin, &
-                                      flipper_cons_qty, flipper_nlenergy,       &
-                                      nr_of_pinballs
+    USE pinball,            ONLY :  lflipper, nr_of_pinballs,                   &
+                                    flipper_ewld_energy, flipper_forcelc,       &
+                                    flipper_forcenl, flipper_ewald_force,       &
+                                    flipper_energy_external,                    &
+                                    flipper_energy_kin,                         &
+                                    flipper_cons_qty, flipper_nlenergy
+                                    
     USE control_flags,          ONLY : iprint, istep
     USE ener,                   ONLY : etot
     
@@ -39,23 +41,22 @@ MODULE hustler
     CHARACTER*3 :: atom
     CHARACTER*256 :: buffer
     REAL(DP) :: x, y, z
-
-!    CHARACTER(LEN=256) :: hustlerfile
-
+    LOGICAL :: lhustle
+    INTEGER hustler_nat
 
 
 CONTAINS 
 
     SUBROUTINE init_hustler()
-        
-    
         IF ( ionode ) THEN
+
             write(UNIT=stdout, FMT=*) "   OPENING HUSTLER file ", hustlerfile
             OPEN(UNIT=iunhustle,FILE=trim(tmp_dir)//'../'//trim(hustlerfile),FORM="FORMATTED",STATUS="OLD",ACTION="READ")
 
             ! call allocate_dyn_vars()
             istep0 = 0
             elapsed_time = 0.D0
+
             IF ( lflipper) THEN
                 ndof = 3*nr_of_pinballs
             ELSE
@@ -88,50 +89,26 @@ CONTAINS
             tau_new(:,:)= tau(:,:)
         END IF
 
-!~ 101 format(A,3(1X,f16.10))
-
     END SUBROUTINE init_hustler
-
-
-
 
 
     SUBROUTINE hustle_ions()
 
-        
-
-      
-
-      ! USE pinball
-      ! USE input_parameters,     ONLY : nstep_thermo
-      !
-      IMPLICIT NONE
-      !
-      REAL(DP) :: ekin, etotold
-      
-      REAL(DP) :: delta(3), ml(3), mlt
-      INTEGER  :: na
-      ! istep0 counts MD steps done during this run
-      ! (istep counts instead all MD steps, including those of previous runs)
-      
-
-
-
-      ! REAL(DP) :: kstress(3,3)
-      ! LEONID
-      REAL(DP) :: walltime_s
-      REAL(DP), EXTERNAL :: get_clock
-      INTEGER :: io
-
+        IMPLICIT NONE
+        REAL(DP) :: ekin, etotold
+        REAL(DP) :: delta(3), ml(3), mlt
+        INTEGER  :: na
+        REAL(DP) :: walltime_s
+        REAL(DP), EXTERNAL :: get_clock
+        INTEGER :: io
+    
 
         print*, "HUSTLER (ISTEP0", istep0, ") UPDATING POSITIONS"
 
         IF ( istep0 > nstep ) conv_ions = .true.
-
         READ(UNIT=iunhustle, FMT=*, IOSTAT=io) buffer  ! Read the line of stuff
         IF ( io .ne. 0 ) THEN
             conv_ions = .true.
-            
 
         ELSE
             DO i=1, hustler_nat
@@ -139,7 +116,6 @@ CONTAINS
                 tau_new(1,i) = x / alat
                 tau_new(2,i) = y / alat
                 tau_new(3,i) = z / alat
-
             END DO
         ENDIF
         IF ( istep0 > 0 ) THEN
@@ -148,12 +124,11 @@ CONTAINS
             vel(:,:) = 0.0D0 ! TODO what if velocities are in input file
         END IF
 
-    ! LEONID: Computing kinetic energy and temperature for the flipper
+        ! LEONID: Computing kinetic energy and temperature for the flipper
         if (lflipper) then
             flipper_energy_kin= 0.D0  ! LEONID: Here we calculate the kinetic energy of the flipper
             ! LEONID: Only the pinballs contribute:
             DO na = 1, nr_of_pinballs
-                !
                 ! ml(:) = ml(:) + vel(:,na) * mass(na)
                 flipper_energy_kin  = flipper_energy_kin + 0.5D0 * mass(na) * &
                                 ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
@@ -186,14 +161,14 @@ CONTAINS
                     istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
                     flipper_forcenl, flipper_ewald_force, ekin, etot,       &
                     flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
-                    conv_elec                                               &
-                ) !aris ! LEONID: added force and walltime
+                    conv_elec, ldecompose_forces                            &
+                )
             ELSE
                 call write_traj(                                              &
                       istep, elapsed_time, tau, vel, force, forcelc, forcenl, &
                       forceion, ekin, etot, ekin+etot, temp_new, walltime_s,  &
-                      nat, conv_elec                                          &
-                  ) !aris ! LEONID: added force and walltime
+                      nat, conv_elec, ldecompose_forces                       &
+                  )
             END IF
         ELSE
             print*, 'NOT PRINTING'
@@ -201,25 +176,18 @@ CONTAINS
 
         elapsed_time = elapsed_time + dt*2.D0*au_ps
         !
-        istep0= istep0+ 1
+        istep0= istep0 + 1
         istep = istep + 1
-        
-        
+
         ! ... here the tau are shifted
         ! LEONID: I moved this to this point, since before, since tau was overwritten with
         ! future positions before being printed
-        ! 
         tau_old(:,:) = tau(:,:)
         tau(:,:) = tau_new(:,:)
-
-!~ 102 format(A,3(1X,f16.10))
-!~ 102 format(A, f16.10, f16.10, f16.10)
-
 
     END SUBROUTINE hustle_ions
 
     SUBROUTINE end_hustler()
-    
         ! CALL deallocate_dyn_vars()
         IF ( ionode ) THEN
             write(UNIT=stdout, FMT=*) "   CLOSING HUSTLER file ", hustlerfile
@@ -227,7 +195,5 @@ CONTAINS
         END IF
 
     END SUBROUTINE end_hustler
-
-
 
 END MODULE

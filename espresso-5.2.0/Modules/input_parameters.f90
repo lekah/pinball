@@ -163,6 +163,8 @@ MODULE input_parameters
         
         
         LOGICAL  :: lflipper = .false.
+
+        LOGICAL  :: ldecompose_forces = .false.
         
         CHARACTER(len=256) :: flipper_typ = 'H'
         
@@ -294,7 +296,8 @@ MODULE input_parameters
           tefield2, saverho, tabps, lkpoint_dir, use_wannier, lecrpa,     &
           tqmmm, vdw_table_name, lorbm, memory, point_label_type,         &
           lcalc_z2, z2_m_threshold, z2_z_threshold,                       &
-          prefix_flipper_charge, lflipper, lhustle, hustlerfile, hustler_nat            ! LEONID
+          prefix_flipper_charge, lflipper, ldecompose_forces,             &     ! LEONID
+          lhustle, hustlerfile, hustler_nat                                     ! LEONID
 
 !
 !=----------------------------------------------------------------------------=!

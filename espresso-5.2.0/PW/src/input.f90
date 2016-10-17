@@ -149,9 +149,14 @@ SUBROUTINE iosys()
                             llondon, do_makov_payne, lxdm, &
                             ts_vdw_           => ts_vdw, &
                             lecrpa_           => lecrpa, &
+                            scf_must_converge_ => scf_must_converge, &
                             smallmem
-  USE control_flags, ONLY: scf_must_converge_ => scf_must_converge
-  !
+  !LEONID:
+  USE pinball,       ONLY : lflipper_       => lflipper
+  USE hustler,       ONLY : lhustle_        => lhustle,         &
+                            hustler_nat_    => hustler_nat !,     &
+  ! END LEONID
+
   USE wvfct,         ONLY : nbnd_ => nbnd, &
                             ecutwfc_ => ecutwfc, &
                             ecfixed_ => ecfixed, &
@@ -203,7 +208,7 @@ SUBROUTINE iosys()
                                nberrycyc, lkpoint_dir, efield_cart, lecrpa,    &
                                vdw_table_name, memory, tqmmm,                  &
                                lcalc_z2, z2_m_threshold, z2_z_threshold,       &
-                               efield_phase
+                               efield_phase, lflipper, lhustle, hustler_nat
 
   !
   ! ... SYSTEM namelist
@@ -1142,6 +1147,13 @@ SUBROUTINE iosys()
   nofrac                  = force_symmorphic
   nbnd_                   = nbnd
   !
+  ! FOR hustler
+  lhustle_                = lhustle
+  hustler_nat_            = hustler_nat
+  ! FOR pinball
+  
+  lflipper_               = lflipper
+
   !
   diago_full_acc_ = diago_full_acc
   starting_wfc    = startingwfc

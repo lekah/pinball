@@ -23,7 +23,7 @@ SUBROUTINE close_files(lflag)
   USE wannier_new,   ONLY : use_wannier
   USE bp,            ONLY : lelfield
   USE io_global,     ONLY : ionode !aris
-  USE input_parameters, ONLY : lflipper
+  USE pinball,       ONLY : lflipper
   !
   IMPLICIT NONE
   !

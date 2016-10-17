@@ -272,6 +272,7 @@ close_files.o : bp_mod.o
 close_files.o : buffers.o
 close_files.o : ldaU.o
 close_files.o : pwcom.o
+close_files.o : pinball.o
 compute_becsum.o : ../../Modules/becmod.o
 compute_becsum.o : ../../Modules/control_flags.o
 compute_becsum.o : ../../Modules/io_files.o
@@ -472,6 +473,7 @@ exx.o : symm_base.o
 exx.o : us_exx.o
 find_group.o : ../../Modules/kind.o
 flipper_force_energy_us.o : pwcom.o
+flipper_force_energy_us.o : pinball.o
 flipper_force_ewald.o : ../../Modules/constants.o
 flipper_force_ewald.o : ../../Modules/kind.o
 flipper_force_ewald.o : ../../Modules/mp.o
@@ -775,6 +777,7 @@ hustler.o : ../../Modules/ions_base.o
 hustler.o : ../../Modules/kind.o
 hustler.o : ../../Modules/random_numbers.o
 hustler.o : pinball.o
+hustler.o : dynamics_module.o
 hustler.o : pwcom.o
 hustler.o : symm_base.o
 init_at_1.o : ../../Modules/atom.o

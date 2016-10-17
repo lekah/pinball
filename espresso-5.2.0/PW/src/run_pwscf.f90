@@ -44,10 +44,10 @@ SUBROUTINE run_pwscf ( exit_status )
   USE mp,               ONLY : mp_sum               ! LEONID
   USE mp_bands,         ONLY : intra_bgrp_comm      ! LEONID
   USE cell_base,        ONLY : omega                ! LEONID
-  USE io_files,         ONLY : prefix               ! LEONID
-  USE input_parameters, ONLY : prefix_flipper_charge, lflipper, lhustle          ! LEONID
-  USE vlocal,           ONLY : strf, vloc                               ! LEONID
-  USE ions_base,        ONLY : nat, ityp, tau, ntyp => nsp, zv          ! LEONID
+  ! USE io_files,         ONLY : prefix               ! LEONID
+  !~   USE input_parameters, ONLY : prefix_flipper_charge          ! LEONID
+  ! USE vlocal,           ONLY : strf, vloc                               ! LEONID
+  ! USE ions_base,        ONLY : nat, ityp, tau, ntyp => nsp, zv          ! LEONID
   USE gvect,            ONLY :  ngm, gstart, g, eigts1, &
                                 eigts2, eigts3, gcutm, &
                                 gg,ngl, nl, igtongl                     ! LEONID
@@ -58,7 +58,7 @@ SUBROUTINE run_pwscf ( exit_status )
   USE wavefunctions_module,  ONLY: psic, evc !Aris
   use wvfct, only : nbnd, wg
   USE pinball
-  USE hustler,          ONLY : init_hustler, end_hustler
+  USE hustler,          ONLY : init_hustler, end_hustler, lhustle
   
  ! For temp check
    USE fft_base,        ONLY : dffts

@@ -23,7 +23,7 @@ MODULE pinball
   COMPLEX(DP), ALLOCATABLE  :: charge_g(:)                ! LEONID
   INTEGER                   :: flipper_ityp                     ! LEONID the integer that corresponds to the type of atom that is the pinball
 
-
+  LOGICAL :: lflipper
 
   CONTAINS
 
