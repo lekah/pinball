@@ -336,6 +336,8 @@ MODULE input_parameters
         REAL(DP):: tot_charge = 0.0_DP
           ! total system charge
 
+        REAL(DP):: flipper_nonlocal_correction = 1.0_DP  ! LEONID correction of non-local forces with the flipper
+
         REAL(DP) :: tot_magnetization = -1.0_DP
           ! majority - minority spin.
           ! A value < 0 means unspecified
@@ -588,7 +590,8 @@ MODULE input_parameters
              xdm, xdm_a1, xdm_a2,                                             &
              step_pen, A_pen, sigma_pen, alpha_pen, no_t_rev,                 &
              esm_bc, esm_efield, esm_w, esm_nfit, esm_debug, esm_debug_gpmax, &
-             space_group, uniqueb, origin_choice, rhombohedral
+             space_group, uniqueb, origin_choice, rhombohedral,               &
+             flipper_nonlocal_correction
 
 !=----------------------------------------------------------------------------=!
 !  ELECTRONS Namelist Input Parameters

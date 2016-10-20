@@ -152,7 +152,8 @@ SUBROUTINE iosys()
                             scf_must_converge_ => scf_must_converge, &
                             smallmem
   !LEONID:
-  USE pinball,       ONLY : lflipper_       => lflipper
+  USE pinball,       ONLY : lflipper_       => lflipper,         &
+                            flipper_nonlocal_correction_ => flipper_nonlocal_correction
   USE hustler,       ONLY : lhustle_        => lhustle,         &
                             hustler_nat_    => hustler_nat !,     &
   ! END LEONID
@@ -239,7 +240,7 @@ SUBROUTINE iosys()
                                one_atom_occupations,                          &
                                esm_bc, esm_efield, esm_w, esm_nfit,           &
                                space_group, uniqueb, origin_choice,           &
-                               rhombohedral
+                               rhombohedral, flipper_nonlocal_correction
   !
   ! ... ELECTRONS namelist
   !
@@ -1153,6 +1154,7 @@ SUBROUTINE iosys()
   ! FOR pinball
   
   lflipper_               = lflipper
+  flipper_nonlocal_correction_ = flipper_nonlocal_correction
 
   !
   diago_full_acc_ = diago_full_acc

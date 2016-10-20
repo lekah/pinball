@@ -833,6 +833,9 @@ MODULE read_namelists_module
        CALL mp_bcast( uniqueb,            ionode_id, intra_image_comm )
        CALL mp_bcast( origin_choice,      ionode_id, intra_image_comm )
        CALL mp_bcast( rhombohedral,       ionode_id, intra_image_comm )
+       
+       ! LEONID for pinball
+       CALL mp_bcast( flipper_nonlocal_correction, ionode_id, intra_image_comm )
 
        RETURN
        !

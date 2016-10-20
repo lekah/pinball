@@ -17,11 +17,12 @@ MODULE pinball
                                 flipper_epot, &                 ! LEONID: flipper_energy_external + flipper_ewld_energy
                                 flipper_cons_qty                ! LEONID: flipper_ewld_energy+flipper_energy_external+flipper_energy_kin
 
-  REAL(DP)                  :: flipper_temp
+  REAL(DP)                  :: flipper_nonlocal_correction
   INTEGER                   :: nr_of_pinballs                                  ! LEONID
 
   COMPLEX(DP), ALLOCATABLE  :: charge_g(:)                ! LEONID
   INTEGER                   :: flipper_ityp                     ! LEONID the integer that corresponds to the type of atom that is the pinball
+  
 
   LOGICAL :: lflipper
 
@@ -188,6 +189,10 @@ MODULE pinball
         CALL init_us_2( npw, igk, xk(1,1), vkb )
 
         CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
+        
+        ! Applying the correction to the nonlocal term based on a linear factor
+        flipper_forcenl(:,:) =  flipper_nonlocal_correction * flipper_forcenl(:,:)
+        flipper_nlenergy     = flipper_nonlocal_correction*flipper_nlenergy
 
         DO ipol = 1, 3
              DO na = 1, nr_of_pinballs
