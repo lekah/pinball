@@ -59,7 +59,6 @@ MODULE pinball
         INTEGER  :: ipol
         INTEGER :: iv, i, iun
         INTEGER, EXTERNAL :: find_free_unit
-        CHARACTER(LEN=256) :: normal_prefix                   ! LEONID
         LOGICAL  :: exst
         
         REAL(DP) :: q_tot, q_tot2, q_tot3
@@ -80,7 +79,6 @@ MODULE pinball
         call allocate_flipper()   
 
 !~          normal_prefix = prefix
-!~          prefix = prefix_flipper_charge 
 !~          print*, '&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
          CALL read_rho(charge_density, nspin)
 
