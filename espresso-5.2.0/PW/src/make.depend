@@ -822,6 +822,7 @@ init_run.o : newd.o
 init_run.o : paw_init.o
 init_run.o : pwcom.o
 init_run.o : symme.o
+init_run.o : hustler.o
 init_us_1.o : ../../Modules/atom.o
 init_us_1.o : ../../Modules/cell_base.o
 init_us_1.o : ../../Modules/constants.o
