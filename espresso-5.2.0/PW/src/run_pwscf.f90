@@ -144,7 +144,9 @@ SUBROUTINE run_pwscf ( exit_status )
      IF (lflipper) THEN
 
         CALL flipper_forces_potener()
+        CALL start_clock( 'move_ions' )
         CALL move_ions()
+        CALL stop_clock( 'move_ions' )
 
       ELSE 
          IF ( lforce ) CALL forces()          

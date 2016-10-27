@@ -213,6 +213,23 @@ SUBROUTINE print_clock_pw()
    call print_clock('h_epsi_set')
    call print_clock('h_epsi_apply')
    call print_clock('c_phase_field')
+   ! LEONID printing ions
+    WRITE( stdout, '(/,5X,"IONS")' )
+   CALL print_clock( 'ions' )
+   CALL print_clock( 'move_ions' )
+    WRITE( stdout, '(/,5X,"PINBALL")' )
+    CALL print_clock( 'pb_ewald' )
+    CALL print_clock( 'pb_force_lc' )
+    CALL print_clock( 'init_us_2_pb' )
+    CALL print_clock( 'pb_nonloc' )
+!~     CALL print_clock( 'ener_gamma' )
+!~     CALL print_clock( 'force_pb_gamma' )
+!~     CALL print_clock( 'calbackfor' )
+!~     CALL print_clock( 'vkb1loop' )
+!~     CALL print_clock( 'force_us_gam' )
+!~     CALL start_clock ( 'calbackfor' )
+!~     CALL start_clock ( 'calbackfor' )
+
    !
    CALL plugin_clock()
    !

@@ -21,6 +21,7 @@ MODULE pinball
   INTEGER                   :: nr_of_pinballs                                  ! LEONID
 
   COMPLEX(DP), ALLOCATABLE  :: charge_g(:)                ! LEONID
+  COMPLEX(DP), allocatable  :: evc_grad(:,:,:)
   INTEGER                   :: flipper_ityp                     ! LEONID the integer that corresponds to the type of atom that is the pinball
   
 
@@ -57,7 +58,7 @@ MODULE pinball
         INTEGER  :: igrid,iatom,igm
         INTEGER  :: counter
         INTEGER  :: na
-        INTEGER  :: ipol
+        INTEGER  :: ipol, ibnd, ig
         INTEGER :: iv, i, iun
         INTEGER, EXTERNAL :: find_free_unit
         LOGICAL  :: exst
@@ -140,6 +141,16 @@ MODULE pinball
             charge_g(igm)=psic(nl(igm))
          END DO
 
+
+        DO ipol = 1, 3
+            DO ibnd = 1, nbnd
+                DO ig=1, npw
+                    evc_grad(ipol, ig, ibnd) = evc(ig, ibnd) * (0.D0,1.D0) * g(ipol,igk(ig))
+                END DO
+            END DO
+        END DO
+
+
     END SUBROUTINE init_flipper
     
     
@@ -178,17 +189,24 @@ MODULE pinball
         
         flipper_ewld_energy = ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
                 omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
-
+        
+        CALL start_clock( 'pb_ewald' )
         CALL flipper_force_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                  gg, ngm, gstart, gamma_only, gcutm, strf )
+        CALL stop_clock( 'pb_ewald' )
 
-
+        CALL start_clock( 'pb_force_lc' )
         CALL flipper_force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
                  g, nl, nspin, gstart, gamma_only, vloc )
+        CALL stop_clock( 'pb_force_lc' )
 
+        CALL start_clock( 'init_us_2_pb' )
         CALL init_us_2( npw, igk, xk(1,1), vkb )
+        CALL stop_clock( 'init_us_2_pb' )
 
+        CALL start_clock( 'pb_nonloc' )
         CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
+        CALL stop_clock( 'pb_nonloc' )
         
         ! Applying the correction to the nonlocal term based on a linear factor
         flipper_forcenl(:,:) =  flipper_nonlocal_correction * flipper_forcenl(:,:)
@@ -221,20 +239,23 @@ MODULE pinball
         DEALLOCATE(flipper_forcelc)                 ! LEONID
         DEALLOCATE(total_force)                 ! LEONID
         DEALLOCATE(charge_g)
+        DEALLOCATE(evc_grad)
 
     end subroutine deallocate_flipper
 
 
 
     subroutine allocate_flipper
-        use gvect, only :ngm
-        use ions_base, only: nat
-
+        use gvect,                  ONLY :ngm
+        use ions_base,              ONLY : nat
+        USE wvfct,                  ONLY : nbnd, npwx
+        USE noncollin_module,       ONLY : npol
         ALLOCATE(flipper_ewald_force( 3, nr_of_pinballs ))
         ALLOCATE(flipper_forcelc( 3, nr_of_pinballs))
         ALLOCATE(total_force( 3, nr_of_pinballs))
         ALLOCATE(charge_g(ngm)) 
         ALLOCATE(flipper_forcenl( 3, nat ))
+        ALLOCATE(evc_grad(3, npwx*npol, nbnd ) )
 
     end subroutine allocate_flipper
 

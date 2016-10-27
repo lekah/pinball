@@ -40,19 +40,22 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   REAL(DP), INTENT(OUT) :: forcenl(3,nat) ! the nonlocal contribution
   !
   REAL(DP), INTENT(OUT) :: ener 
-  COMPLEX(DP), ALLOCATABLE :: vkb1(:,:)   ! contains g*|beta>
+
+  ! COMPLEX(DP), ALLOCATABLE :: vkb1(:,:)   ! contains g*|beta>
   COMPLEX(DP), ALLOCATABLE :: deff_nc(:,:,:,:)
   REAL(DP), ALLOCATABLE :: deff(:,:,:)
   TYPE(bec_type) :: dbecp                 ! contains <dbeta|psi>
-  INTEGER    :: ik, ipol, ig, jkb
+  INTEGER    :: ik, ipol, ig, jkb, ibnd
   !
   forcenl(:,:) = 0.D0
   ener=0.d0
+  
+
   !
   CALL allocate_bec_type ( nkb, nbnd, becp, intra_bgrp_comm )   
   CALL allocate_bec_type ( nkb, nbnd, dbecp, intra_bgrp_comm )   
-  ALLOCATE( vkb1( npwx, nkb ) )   
-  IF (noncolin) then
+  ! ALLOCATE( vkb1( npwx, nkb ) )   
+  IF (noncolin) then   ! We are neven noncolin
      ALLOCATE( deff_nc(nhm,nhm,nat,nspin) )
   ELSE IF (.NOT. gamma_only ) THEN
      ALLOCATE( deff(nhm,nhm,nat) )
@@ -61,6 +64,9 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   ! ... the forces are a sum over the K points and over the bands
   !   
   IF ( nks > 1 ) REWIND iunigk
+
+
+
   DO ik = 1, nks
      !
      IF ( lsda ) current_spin = isk(ik)
@@ -76,23 +82,39 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
 
      !!!!!!! !trick for using old code for energy computation
      dbecp=becp 
+     ! CALL start_clock ('ener_gamma')
      CALL ener_gamma( ener )
+     ! CALL stop_clock ('ener_gamma')
      !just to be sure that we can resure dbecp (can be taken out?)
      CALL deallocate_bec_type ( dbecp ) 
      CALL allocate_bec_type ( nkb, nbnd, dbecp, intra_bgrp_comm ) 
      !!!!!!!
+     ! CALL start_clock ('force_pb_gamma')
+     
      
      DO ipol = 1, 3
-        DO jkb = 1, nkb
-!$omp parallel do default(shared) private(ig)
-           do ig = 1, npw
-              vkb1(ig,jkb) = vkb(ig,jkb) * (0.D0,-1.D0) * g(ipol,igk(ig))
-           END DO
-!$omp end parallel do
-        END DO
+
+
+!        DO jkb = 1, nkb
+!!$omp parallel do default(shared) private(ig)
+!           do ig = 1, npw
+!              vkb1(ig,jkb) = vkb(ig,jkb) * (0.D0,-1.D0) * g(ipol,igk(ig))
+!           END DO
+!!$omp end parallel do
+!        END DO
+
+        ! CALL start_clock ( 'calbackfor' )
+        
+        ! OLD STUFF 
+        ! CALL calbec ( npw, vkb1, evc, dbecp )
+        
+        ! NEW STUFF 
+        CALL calbec ( npw, vkb, evc_grad(ipol, :,:), dbecp )
+        
         !
-        CALL calbec ( npw, vkb1, evc, dbecp )
-        !
+        ! CALL stop_clock ( 'calbackfor' )
+
+        ! CALL start_clock ( 'force_us_gam' )
         IF ( gamma_only ) THEN
            !
            CALL force_us_gamma( forcenl )
@@ -102,8 +124,12 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
            CALL force_us_k( forcenl )
            !
         END IF
+        ! CALL stop_clock ( 'force_us_gam' )
+        
      END DO
+     ! CALL stop_clock ('force_pb_gamma')
   END DO
+
   !
   ! ... if sums over bands are parallelized over the band group
   !
@@ -114,7 +140,7 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   ELSE IF ( .NOT. GAMMA_ONLY) THEN
      DEALLOCATE( deff )
   ENDIF
-  DEALLOCATE( vkb1 )
+  ! DEALLOCATE( vkb1 )
   CALL deallocate_bec_type ( dbecp )   
   CALL deallocate_bec_type ( becp )   
   !
@@ -122,7 +148,13 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   ! ... augmentation part \int V_eff Q dr, the term deriving from the 
   ! ... derivative of Q is added in the routine addusforce
   !
-  CALL addusforce( forcenl )
+  
+
+  !   CALL start_clock('addusforce')
+  !   LEONID: We remove the call to addusforce since the Q function is 0
+  !   for the pinball
+  !   CALL addusforce( forcenl )
+  !   CALL stop_clock('addusforce')
   !
   ! ... collect contributions across pools from all k-points
   !
@@ -132,6 +164,7 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   ! ... BZ we have to symmetrize the forces.
   !
   CALL symvector ( nat, forcenl )
+
   !
   RETURN
   !
