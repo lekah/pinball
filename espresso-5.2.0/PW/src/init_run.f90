@@ -110,7 +110,6 @@ SUBROUTINE init_run()
     CALL init_flipper()  
   ENDIF
 
-  print*, "HERHE"
   !
   IF(use_wannier) CALL wannier_init()
   !
