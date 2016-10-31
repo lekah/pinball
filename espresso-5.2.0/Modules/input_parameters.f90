@@ -161,10 +161,11 @@ MODULE input_parameters
         LOGICAL :: lhustle = .false.
         INTEGER :: hustler_nat = -1
         
-        
         LOGICAL  :: lflipper = .false.
 
         LOGICAL  :: ldecompose_forces = .false.
+        LOGICAL  :: flipper_do_nonloc = .true.     ! Add the nonlocal part for the flipper
+    
         
         CHARACTER(len=256) :: flipper_typ = 'H'
         
@@ -297,7 +298,7 @@ MODULE input_parameters
           tqmmm, vdw_table_name, lorbm, memory, point_label_type,         &
           lcalc_z2, z2_m_threshold, z2_z_threshold,                       &
           prefix_flipper_charge, lflipper, ldecompose_forces,             &     ! LEONID
-          lhustle, hustlerfile, hustler_nat                                     ! LEONID
+          flipper_do_nonloc, lhustle, hustlerfile, hustler_nat                  ! LEONID
 
 !
 !=----------------------------------------------------------------------------=!

@@ -153,7 +153,8 @@ SUBROUTINE iosys()
                             smallmem
   !LEONID:
   USE pinball,       ONLY : lflipper_       => lflipper,         &
-                            flipper_nonlocal_correction_ => flipper_nonlocal_correction
+                            flipper_nonlocal_correction_ => flipper_nonlocal_correction, &
+                            flipper_do_nonloc_ => flipper_do_nonloc
   USE hustler,       ONLY : lhustle_        => lhustle,         &
                             hustler_nat_    => hustler_nat !,     &
   ! END LEONID
@@ -209,7 +210,9 @@ SUBROUTINE iosys()
                                nberrycyc, lkpoint_dir, efield_cart, lecrpa,    &
                                vdw_table_name, memory, tqmmm,                  &
                                lcalc_z2, z2_m_threshold, z2_z_threshold,       &
-                               efield_phase, lflipper, lhustle, hustler_nat
+                               efield_phase, lflipper, lhustle, hustler_nat,   &
+                               flipper_do_nonloc
+
 
   !
   ! ... SYSTEM namelist
@@ -1155,6 +1158,7 @@ SUBROUTINE iosys()
   
   lflipper_               = lflipper
   flipper_nonlocal_correction_ = flipper_nonlocal_correction
+  flipper_do_nonloc_ = flipper_do_nonloc
 
   !
   diago_full_acc_ = diago_full_acc

@@ -26,6 +26,7 @@ MODULE pinball
   
 
   LOGICAL :: lflipper
+  LOGICAL :: flipper_do_nonloc = .true.
 
   CONTAINS
 
@@ -200,17 +201,25 @@ MODULE pinball
                  g, nl, nspin, gstart, gamma_only, vloc )
         CALL stop_clock( 'pb_force_lc' )
 
-        CALL start_clock( 'init_us_2_pb' )
-        CALL init_us_2( npw, igk, xk(1,1), vkb )
-        CALL stop_clock( 'init_us_2_pb' )
 
-        CALL start_clock( 'pb_nonloc' )
-        CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
-        CALL stop_clock( 'pb_nonloc' )
+
+
         
         ! Applying the correction to the nonlocal term based on a linear factor
-        flipper_forcenl(:,:) =  flipper_nonlocal_correction * flipper_forcenl(:,:)
-        flipper_nlenergy     = flipper_nonlocal_correction*flipper_nlenergy
+    
+        CALL start_clock( 'pb_nonloc' )
+        IF ( flipper_do_nonloc ) THEN
+
+            CALL init_us_2( npw, igk, xk(1,1), vkb )            
+            CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
+            
+            flipper_forcenl(:,:) =  flipper_nonlocal_correction * flipper_forcenl(:,:)
+            flipper_nlenergy     = flipper_nonlocal_correction*flipper_nlenergy
+        ELSE
+            flipper_forcenl(:,:) =  0.D0
+            flipper_nlenergy     = 0.D0
+        ENDIF
+        CALL stop_clock( 'pb_nonloc' )
 
         DO ipol = 1, 3
              DO na = 1, nr_of_pinballs
