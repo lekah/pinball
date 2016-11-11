@@ -210,7 +210,7 @@ MODULE pinball
         CALL start_clock( 'pb_nonloc' )
         IF ( flipper_do_nonloc ) THEN
 
-            CALL init_us_2( npw, igk, xk(1,1), vkb )            
+            CALL init_us_2( npw, igk, xk(1,1), vkb )
             CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
             
             flipper_forcenl(:,:) =  flipper_nonlocal_correction * flipper_forcenl(:,:)
@@ -220,6 +220,10 @@ MODULE pinball
             flipper_nlenergy     = 0.D0
         ENDIF
         CALL stop_clock( 'pb_nonloc' )
+
+
+        ! flipper_forcelc(:,:) = 0.99057635*flipper_forcelc(:,:)
+
 
         DO ipol = 1, 3
              DO na = 1, nr_of_pinballs
