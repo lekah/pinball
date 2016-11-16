@@ -20,6 +20,7 @@ subroutine flipper_force_ewald (alat, nat, ntyp, ityp, zv, at, bg, tau, &
   USE constants, ONLY : tpi, e2
   USE mp_bands,  ONLY : intra_bgrp_comm
   USE mp,        ONLY : mp_sum
+  USE pinball,   ONLY : flipper_ewald_list
   USE esm,       ONLY : esm_force_ew, do_comp_esm, esm_bc
   USE pinball
   implicit none
@@ -114,9 +115,11 @@ subroutine flipper_force_ewald (alat, nat, ntyp, ityp, zv, at, bg, tau, &
      aux(:) = (0.d0, 0.d0)
 
      do nt = 1, ntyp
-        do ig = gstart, ngm
-           aux (ig) = aux (ig) + zv (nt) * CONJG(strf (ig, nt) )
-        enddo
+        if (flipper_ewald_list(nt)) THEN
+            do ig = gstart, ngm
+               aux (ig) = aux (ig) + zv (nt) * CONJG(strf (ig, nt) )
+            enddo
+        endif
      enddo
      do ig = gstart, ngm
         aux (ig) = aux (ig) * exp ( - gg (ig) * tpiba2 / alpha / 4.d0) &
@@ -153,22 +156,26 @@ subroutine flipper_force_ewald (alat, nat, ntyp, ityp, zv, at, bg, tau, &
   !
   ! LEONID Changed na  to go only from  through the pinballs in the system
   do na = 1, nr_of_pinballs
+     
      do nb = 1, nat
         if (nb.eq.na) goto 50
-         dtau (:) = tau (:, na) - tau (:, nb)
-        !
-        ! generates nearest-neighbors shells r(i)=R(i)-dtau(i)
-        !
-        call rgen (dtau, rmax, mxr, at, bg, r, r2, nrm)
-        do n = 1, nrm
-           rr = sqrt (r2 (n) ) * alat
-           factor = zv (ityp (na) ) * zv (ityp (nb) ) * e2 / rr**2 * &
-                (qe_erfc (sqrt (alpha) * rr) / rr + &
-                sqrt (8.0d0 * alpha / tpi) * exp ( - alpha * rr**2) ) * alat
-           do ipol = 1, 3
-              flipper_ewald_force (ipol, na) = flipper_ewald_force (ipol, na) - factor * r (ipol, n)
-           enddo
-        enddo
+
+        if (flipper_ewald_list(ityp(nb))) THEN
+             dtau (:) = tau (:, na) - tau (:, nb)
+            !
+            ! generates nearest-neighbors shells r(i)=R(i)-dtau(i)
+            !
+            call rgen (dtau, rmax, mxr, at, bg, r, r2, nrm)
+            do n = 1, nrm
+               rr = sqrt (r2 (n) ) * alat
+               factor = zv (ityp (na) ) * zv (ityp (nb) ) * e2 / rr**2 * &
+                    (qe_erfc (sqrt (alpha) * rr) / rr + &
+                    sqrt (8.0d0 * alpha / tpi) * exp ( - alpha * rr**2) ) * alat
+               do ipol = 1, 3
+                  flipper_ewald_force (ipol, na) = flipper_ewald_force (ipol, na) - factor * r (ipol, n)
+               enddo
+            enddo
+        endif
 50      continue
      enddo
   enddo

@@ -80,6 +80,7 @@ find_group.o \
 flipper_force_lc.o \
 flipper_force_energy_us.o \
 flipper_force_ewald.o \
+flipper_energy_ewald.o \
 forces_bp_efield.o \
 force_cc.o \
 force_corr.o \

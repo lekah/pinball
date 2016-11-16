@@ -7,11 +7,16 @@ MODULE pinball
 
 
   REAL(DP), ALLOCATABLE     :: flipper_ewald_force(:,:)         ! LEONID: Forces due to ewald field (classic, flipper_force_ewald.f90)
+  REAL(DP), ALLOCATABLE     :: flipper_ewald_force_pinball(:,:)         ! LEONID: Forces due to ewald field (classic, flipper_force_ewald.f90)
+  REAL(DP), ALLOCATABLE     :: flipper_ewald_force_rigid(:,:)         ! LEONID: Forces due to ewald field (classic, flipper_force_ewald.f90)
   REAL(DP), ALLOCATABLE     :: flipper_forcelc(:,:)             ! LEONID: Forces from local potentials, flipper_force_lc.f90
   REAL(DP), ALLOCATABLE     :: flipper_forcenl(:,:)             ! LEONID: Forces from local potentials, flipper_force_lc.f90
   REAL(DP), ALLOCATABLE     :: total_force(:,:)                 ! LEONID: Force as calculated by flipper_force_lc + flipper_ewald_force
   REAL(DP)                  ::  flipper_energy_external, &      ! LEONID: The external energy coming from the charge density interacting the the local pseudopotential
-                                flipper_ewld_energy, &          ! LEONID: Real for the ewald energy
+                                flipper_ewld_energy_rigid, &    ! LEONID: Real for the ewald energy
+                                flipper_ewld_energy_pinball, &  ! LEONID: Real for the ewald energy
+                                flipper_ewld_energy_total, &  ! LEONID: Real for the ewald energy
+                                flipper_ewld_energy, &  ! LEONID: Real for the ewald energy
                                 flipper_energy_kin, &           ! LEONID: Kinetic energy, only of the pinballs
                                 flipper_nlenergy, &             ! LEONID: flipper_ewld_energy+flipper_energy_external+flipper_energy_kin
                                 flipper_epot, &                 ! LEONID: flipper_energy_external + flipper_ewld_energy
@@ -27,13 +32,14 @@ MODULE pinball
 
   LOGICAL :: lflipper
   LOGICAL :: flipper_do_nonloc = .true.
+  LOGICAL, allocatable       :: flipper_ewald_list(:)
 
   CONTAINS
 
     SUBROUTINE init_flipper()
         USE scf,                ONLY : rho, charge_density
         USE fft_base,           ONLY : dfftp
-        USE ions_base,          ONLY : ityp, nat
+        USE ions_base,          ONLY : ityp, nat, nsp
         use wvfct,              only : nbnd, wg
         USE mp_bands,           ONLY : intra_bgrp_comm
         USE io_global,          ONLY : stdout, ionode
@@ -66,6 +72,9 @@ MODULE pinball
         
         REAL(DP) :: q_tot, q_tot2, q_tot3
         REAL(DP), allocatable :: charge2(:)
+
+
+
 
         nr_of_pinballs = 0
         wg(:,:) = 2.0d0
@@ -152,6 +161,8 @@ MODULE pinball
         END DO
 
 
+    flipper_ewald_list(1:nsp) = .true.
+!~     flipper_ewald_list(1) = .false.
     END SUBROUTINE init_flipper
     
     
@@ -174,8 +185,9 @@ MODULE pinball
         
         IMPLICIT NONE
         
-        REAL(DP), EXTERNAL :: ewald
+        REAL(DP), EXTERNAL :: flipper_energy_ewald
         INTEGER  :: iat, ntyp_save, ipol, na
+        
         
         ntyp_save = ntyp
         ntyp = 1
@@ -188,12 +200,37 @@ MODULE pinball
         ! set ntyp back to what it originally was. Is that necessary?
         ntyp = ntyp_save
         
-        flipper_ewld_energy = ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
+        ! ewald for all atoms PB-PB, PB-R, R-R:
+        flipper_ewald_list(1:ntyp) = .true.
+        flipper_ewld_energy_total = flipper_energy_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
+                omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
+
+        flipper_ewald_list(2:ntyp) = .false.
+        ! This is only pinball-pinball ionic interaction
+        flipper_ewld_energy_pinball = flipper_energy_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
                 omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
         
+        ! For phonons??
+        ! PB-R, R-R
+        ! Put factors
+        flipper_ewld_energy = 1.2D0*(flipper_ewld_energy_total - flipper_ewld_energy_pinball) + 0.5D0*flipper_ewld_energy_pinball
+        
         CALL start_clock( 'pb_ewald' )
+        ! Calculating forces for PB-R
+        flipper_ewald_list(2:ntyp) = .true.
+        flipper_ewald_list(1) = .false.
         CALL flipper_force_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                  gg, ngm, gstart, gamma_only, gcutm, strf )
+        flipper_ewald_force_rigid(:,:) = flipper_ewald_force(:,:)
+
+        ! Calculating forces for PB-PB
+        flipper_ewald_list(2:ntyp) = .false.
+        flipper_ewald_list(1) = .true.
+        CALL flipper_force_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
+                 gg, ngm, gstart, gamma_only, gcutm, strf )
+        flipper_ewald_force_pinball(:,:) = flipper_ewald_force(:,:)
+
+        flipper_ewald_force(:,:) =  0.5D0*flipper_ewald_force_pinball(:,:) +  0.5D0*flipper_ewald_force_rigid(:,:)
         CALL stop_clock( 'pb_ewald' )
 
         CALL start_clock( 'pb_force_lc' )
@@ -201,10 +238,6 @@ MODULE pinball
                  g, nl, nspin, gstart, gamma_only, vloc )
         CALL stop_clock( 'pb_force_lc' )
 
-
-
-
-        
         ! Applying the correction to the nonlocal term based on a linear factor
     
         CALL start_clock( 'pb_nonloc' )
@@ -213,17 +246,13 @@ MODULE pinball
             CALL init_us_2( npw, igk, xk(1,1), vkb )
             CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
             
-            flipper_forcenl(:,:) =  flipper_nonlocal_correction * flipper_forcenl(:,:)
+            flipper_forcenl(:,:) =  : * flipper_forcenl(:,:)
             flipper_nlenergy     = flipper_nonlocal_correction*flipper_nlenergy
         ELSE
             flipper_forcenl(:,:) =  0.D0
             flipper_nlenergy     = 0.D0
         ENDIF
         CALL stop_clock( 'pb_nonloc' )
-
-
-        ! flipper_forcelc(:,:) = 0.99057635*flipper_forcelc(:,:)
-
 
         DO ipol = 1, 3
              DO na = 1, nr_of_pinballs
@@ -249,10 +278,13 @@ MODULE pinball
 
 
         DEALLOCATE(flipper_ewald_force)                 ! LEONID
+        DEALLOCATE(flipper_ewald_force_pinball)                 ! LEONID
+        DEALLOCATE(flipper_ewald_force_rigid)                 ! LEONID
         DEALLOCATE(flipper_forcelc)                 ! LEONID
         DEALLOCATE(total_force)                 ! LEONID
         DEALLOCATE(charge_g)
         DEALLOCATE(evc_grad)
+        DEALLOCATE(flipper_ewald_list)
 
     end subroutine deallocate_flipper
 
@@ -260,15 +292,18 @@ MODULE pinball
 
     subroutine allocate_flipper
         use gvect,                  ONLY :ngm
-        use ions_base,              ONLY : nat
+        use ions_base,              ONLY : nat, nsp
         USE wvfct,                  ONLY : nbnd, npwx
         USE noncollin_module,       ONLY : npol
         ALLOCATE(flipper_ewald_force( 3, nr_of_pinballs ))
+        ALLOCATE(flipper_ewald_force_pinball( 3, nr_of_pinballs ))
+        ALLOCATE(flipper_ewald_force_rigid( 3, nr_of_pinballs ))
         ALLOCATE(flipper_forcelc( 3, nr_of_pinballs))
         ALLOCATE(total_force( 3, nr_of_pinballs))
         ALLOCATE(charge_g(ngm)) 
         ALLOCATE(flipper_forcenl( 3, nat ))
         ALLOCATE(evc_grad(3, npwx*npol, nbnd ) )
+        ALLOCATE(flipper_ewald_list(nsp))
 
     end subroutine allocate_flipper
 
