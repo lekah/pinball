@@ -480,6 +480,7 @@ flipper_force_ewald.o : ../../Modules/mp.o
 flipper_force_ewald.o : ../../Modules/mp_bands.o
 flipper_force_ewald.o : esm.o
 flipper_force_ewald.o : pinball.o
+flipper_energy_ewald.o : pinball.o
 flipper_force_lc.o : ../../Modules/constants.o
 flipper_force_lc.o : ../../Modules/fft_base.o
 flipper_force_lc.o : ../../Modules/kind.o

@@ -133,7 +133,7 @@ CONTAINS
       USE constraints_module, ONLY : nconstr, check_constraint
       USE constraints_module, ONLY : remove_constr_force, remove_constr_vec
       USE pinball
-      USE input_parameters,     ONLY : nstep_thermo, ldecompose_forces
+      USE input_parameters,     ONLY : nstep_thermo, ldecompose_forces, ldecompose_ewald
       !
       IMPLICIT NONE
       !
@@ -437,65 +437,88 @@ CONTAINS
       ! ... infos are written on the standard output
       !
 
-      
-      
-      
-      IF (lflipper) THEN
-          if (mod(istep, iprint) .eq. 0) THEN
-              WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
+
+        IF (lflipper) THEN
+            IF (mod(istep, iprint) .eq. 0) THEN
+                WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
                              & 5X,"Eext                  = ",F14.8," Ry",/,  &
                              & 5X,"Eewld                 = ",F14.8," Ry",/,  &
                              & 5X,"Etot                  = ",F14.8," Ry",/,  &
                              & 5X,"Ekin + Etot (const)   = ",F14.8," Ry",/,  &
                              & 5X,"temperature           = ",F14.8," K ")' ) &
-                  ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
-              call write_traj(                                              &
-                    istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
-                    flipper_forcenl, flipper_ewald_force, ekin, etot,       &
-                    flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
-                    .false., ldecompose_forces                              &
-                ) !aris ! LEONID: added force and walltime
-           endif
-      ELSE
+                    ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
+                    
+                IF (ldecompose_ewald) THEN
+                    call write_traj_decompose_ewald(                            &
+                        istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
+                        flipper_forcenl, flipper_ewald_force_rigid,             &
+                        flipper_ewald_force_pinball, ekin, etot,                &
+                        flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                        .false.                                                 &
+                    )
+                ELSEIF (ldecompose_forces) THEN
+                    call write_traj_decompose_forces(                           &
+                        istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
+                        flipper_forcenl, flipper_ewald_force, ekin, etot,       &
+                        flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                        .false.                                                 &
+                    )
+                ELSE
+                    call write_traj_simple(                                     &
+                        istep, elapsed_time, tau, vel, force, ekin, etot,       &
+                        flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                        .false.                                                 &
+                    )
+                ENDIF
+            ENDIF
+        ELSE
           ! LEONID: Let's reduce the output of the MD
-          if (mod(istep, iprint) .eq. 0) THEN
-              WRITE( stdout, '(10X,"kinetic_energy      = ",F14.8," Ry",/,  &
+            if (mod(istep, iprint) .eq. 0) THEN
+                WRITE( stdout, '(10X,"kinetic_energy      = ",F14.8," Ry",/,  &
                              & 10X,"potential_energy    = ",F14.8," Ry",/,  &
                              & 10X,"total_energy        = ",F14.8," Ry",/,  &
                              & 10X,"temperature         = ",F14.8," K ")' ) &
                   ekin, etot, ( ekin  + etot ), temp_new    
-                call write_traj(                                              &
-                        istep, elapsed_time, tau, vel,                        &  
-                        force, forcelc, forcenl, forceion,ekin, etot,         &
-                        ekin+etot, temp_new, walltime_s, nat,                 &
-                        conv_elec, ldecompose_forces                          &
-                    ) !aris ! LEONID: added force and walltime
-          endif
-          IF (lstres) WRITE ( stdout, &
-          '(5X,"Ions kinetic stress = ",F10.2," (kbar)",/3(27X,3F10.2/)/)') &
+                IF (ldecompose_forces) THEN
+                    call write_traj_decompose_forces(                           &
+                            istep, elapsed_time, tau, vel,                      &
+                            force, forcelc, forcenl, forceion,ekin, etot,       &
+                            ekin+etot, temp_new, walltime_s, nat, conv_elec     &
+                        )
+                ELSE
+                    call write_traj_simple(                                       &
+                            istep, elapsed_time, tau, vel,                        &
+                            force,ekin, etot, ekin+etot, temp_new, walltime_s,    &
+                            nat, conv_elec                                        &
+                        )
+                ENDIF
+                
+            endif
+            IF (lstres) WRITE ( stdout, &
+            '(5X,"Ions kinetic stress = ",F10.2," (kbar)",/3(27X,3F10.2/)/)') &
                   ((kstress(1,1)+kstress(2,2)+kstress(3,3))/3.d0*ry_kbar), &
                   (kstress(i,1)*ry_kbar,kstress(i,2)*ry_kbar,kstress(i,3)*ry_kbar, i=1,3)
-          !
-          IF ( .not.( lconstrain .or. ANY( if_pos(:,:) == 0 ) ) ) THEN
-             !
-             ! ... total linear momentum must be zero if all atoms move
-             !
-             mlt = norm( ml(:) )
-             !
-             IF ( mlt > eps8 ) &
+            !
+            IF ( .not.( lconstrain .or. ANY( if_pos(:,:) == 0 ) ) ) THEN
+                !
+                ! ... total linear momentum must be zero if all atoms move
+                !
+                mlt = norm( ml(:) )
+                !
+                IF ( mlt > eps8 ) &
                 CALL infomsg( 'dynamics', 'Total linear momentum <> 0' )
-             !
-             ! LEONID: removed call for linear momentum, since there should be
-             ! an infomsg anyways
-             !   WRITE( stdout, '(/,5X,"Linear momentum :",3(2X,F14.10))' ) ml(:)
-             !
-          ENDIF
-          !
-          ! ... compute the average quantities
-          !
-          !  I really don't care about their averages
-          ! CALL compute_averages( istep )
-      END IF
+                !
+                ! LEONID: removed call for linear momentum, since there should be
+                ! an infomsg anyways
+                !   WRITE( stdout, '(/,5X,"Linear momentum :",3(2X,F14.10))' ) ml(:)
+                !
+            ENDIF
+            !
+            ! ... compute the average quantities
+            !
+            !  I really don't care about their averages
+            ! CALL compute_averages( istep )
+        END IF
 
       ! ... here the tau are shifted
       ! LEONID: I moved this to this point, since before, since tau was overwritten with
@@ -1748,6 +1771,167 @@ CONTAINS
    end subroutine smart_MC
 
 !to change printing flipper quantities and temperature
+   SUBROUTINE write_traj_simple(            &
+            istep, time, tau, vel, force,   &
+            ekin, etot, conserved_quantity, &
+            temp_new, walltime_s,           &
+            nr_of_atoms,                    &
+            lelectrons_converged            &
+        )
+     USE ions_base,          ONLY : nat,atm,ityp !aris
+     ! USE ions_base,          ONLY : atm,ityp
+     USE cell_base,         ONLY : alat !aris
+     ! USE pinball
+
+     real(DP) :: tau(3,nat),vel(3,nat), force(3, nat)
+     real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris
+     integer  :: nr_of_atoms
+     integer :: iat,istep !aris
+     logical :: lelectrons_converged
+
+    if (ionode) then !aris
+        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+        
+        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        do iat=1,nr_of_atoms !aris
+           write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
+        end do !aris
+        
+        
+        do iat=1,nr_of_atoms !aris
+           write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat)
+        end do !aris
+        
+        DO iat=1,nr_of_atoms
+           write(iunfor,101) atm(ityp(iat)), force(1:3,iat)
+        ENDDO
+        
+    end if !aris
+
+100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
+101 format(A,3(1X,f16.10))
+102 format(A,12(1X,f16.10))
+
+   END SUBROUTINE write_traj_simple !aris
+
+
+   SUBROUTINE write_traj_decompose_forces(  &
+            istep, time, tau, vel, force,   &
+            force_local, force_nonlocal,    &
+            force_ewald,                    &
+            ekin, etot, conserved_quantity, &
+            temp_new, walltime_s,           &
+            nr_of_atoms,                    &
+            lelectrons_converged            &
+        )
+     USE ions_base,          ONLY : nat,atm,ityp !aris
+     ! USE ions_base,          ONLY : atm,ityp
+     USE cell_base,         ONLY : alat !aris
+     ! USE pinball
+
+     real(DP) :: tau(3,nat),vel(3,nat), force(3, nat), force_local(3, nat), force_nonlocal(3, nat), force_ewald(3, nat)
+     real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris
+     integer  :: nr_of_atoms
+     integer :: iat,istep !aris
+     logical :: lelectrons_converged
+
+    if (ionode) then !aris
+        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+        
+        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        do iat=1,nr_of_atoms !aris
+           write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
+        end do !aris
+
+        do iat=1,nr_of_atoms !aris
+           write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat)
+        end do !aris
+
+        DO iat=1,nr_of_atoms
+           write(iunfor,102) &
+                    atm(ityp(iat)), &
+                    force(1:3,iat), &
+                    force_local(1:3, iat), &
+                    force_nonlocal(1:3, iat), &
+                    force_ewald(1:3, iat)
+        ENDDO
+
+        
+    end if
+100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
+101 format(A,3(1X,f16.10))
+102 format(A,12(1X,f16.10))
+   END SUBROUTINE write_traj_decompose_forces !aris
+
+
+   SUBROUTINE write_traj_decompose_ewald(       &
+            istep, time, tau, vel, force,       &
+            force_local, force_nonlocal,        &
+            force_ewald_rigid, force_ewald_pb,  &
+            ekin, etot, conserved_quantity,     &
+            temp_new, walltime_s,               &
+            nr_of_atoms,                        &
+            lelectrons_converged                &
+        )
+     USE ions_base,          ONLY : nat,atm,ityp !aris
+     ! USE ions_base,          ONLY : atm,ityp
+     USE cell_base,         ONLY : alat !aris
+     ! USE pinball
+
+     real(DP) ::    tau(3,nat),vel(3,nat), force(3, nat), force_local(3, nat), &
+                    force_nonlocal(3, nat), force_ewald_rigid(3, nat),          &
+                    force_ewald_pb(3, nat)
+     real(DP) :: time, ekin, etot, temp_new, conserved_quantity, walltime_s !aris
+     integer  :: nr_of_atoms
+     integer :: iat,istep !aris
+     logical :: lelectrons_converged
+
+    if (ionode) then !aris
+        write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+        
+        write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
+
+        do iat=1,nr_of_atoms !aris
+           write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
+        end do !aris
+
+        do iat=1,nr_of_atoms !aris
+           write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat)
+        end do !aris
+
+        DO iat=1,nr_of_atoms
+           write(iunfor,103) &
+                    atm(ityp(iat)), &
+                    force(1:3,iat), &
+                    force_local(1:3, iat), &
+                    force_nonlocal(1:3, iat), &
+                    force_ewald_rigid(1:3, iat), &
+                    force_ewald_pb(1:3, iat)
+        ENDDO
+
+        
+    end if
+100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
+101 format(A,3(1X,f16.10))
+103 format(A,15(1X,f16.10))
+   END SUBROUTINE write_traj_decompose_ewald !aris
+
+
+
    SUBROUTINE write_traj(                   &
             istep, time, tau, vel, force,   &
             force_local, force_nonlocal,    &

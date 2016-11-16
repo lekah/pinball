@@ -7,13 +7,19 @@ MODULE hustler
     USE io_global,              ONLY : stdout, ionode
     USE kinds,                  ONLY : DP
     USE constants,              ONLY : au_ps, eps8 , ry_to_kelvin ,amu_ry
-    USE input_parameters,       ONLY : ldecompose_forces
-    USE dynamics_module,        ONLY : write_traj, tau_new, tau_old, vel, mass, &
+    USE input_parameters,       ONLY : ldecompose_forces, ldecompose_ewald
+    USE dynamics_module,        ONLY : write_traj_decompose_ewald,              &
+                                        write_traj_decompose_forces,            &
+                                        write_traj_simple,                      &
+                                        tau_new, tau_old, vel, mass,            &
                                         dt, ndof, vel_defined,                  &
                                         allocate_dyn_vars, deallocate_dyn_vars
     USE pinball,            ONLY :  lflipper, nr_of_pinballs,                   &
                                     flipper_ewld_energy, flipper_forcelc,       &
-                                    flipper_forcenl, flipper_ewald_force,       &
+                                    flipper_forcenl,                            &
+                                    flipper_ewald_force,                        &
+                                    flipper_ewald_force_rigid,                  &
+                                    flipper_ewald_force_pinball,                &
                                     flipper_energy_external,                    &
                                     flipper_energy_kin,                         &
                                     flipper_cons_qty, flipper_nlenergy
@@ -157,18 +163,42 @@ CONTAINS
 
         IF (mod(istep0, iprint) .eq. 0) THEN
             IF (lflipper) THEN
-                call write_traj(                                            &
-                    istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
-                    flipper_forcenl, flipper_ewald_force, ekin, etot,       &
-                    flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
-                    conv_elec, ldecompose_forces                            &
-                )
+                IF (ldecompose_ewald) THEN
+                    call write_traj_decompose_ewald(                            &
+                        istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
+                        flipper_forcenl, flipper_ewald_force_rigid,             &
+                        flipper_ewald_force_pinball, ekin, etot,                &
+                        flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                        conv_elec                                               &
+                    )
+                ELSEIF (ldecompose_forces) THEN
+                    call write_traj_decompose_forces(                           &
+                        istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
+                        flipper_forcenl, flipper_ewald_force, ekin, etot,       &
+                        flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                        conv_elec                                               &
+                    )
+                ELSE
+                    call write_traj_simple(                                     &
+                        istep, elapsed_time, tau, vel, force, ekin, etot,       &
+                        flipper_cons_qty, temp_new, walltime_s, nr_of_pinballs, &
+                        conv_elec                                               &
+                    )
+                ENDIF
             ELSE
-                call write_traj(                                              &
-                      istep, elapsed_time, tau, vel, force, forcelc, forcenl, &
-                      forceion, ekin, etot, ekin+etot, temp_new, walltime_s,  &
-                      nat, conv_elec, ldecompose_forces                       &
-                  )
+                IF (ldecompose_forces) THEN
+                    call write_traj_decompose_forces(                             &
+                          istep, elapsed_time, tau, vel, force, forcelc, forcenl, &
+                          forceion, ekin, etot, ekin+etot, temp_new, walltime_s,  &
+                          nat, conv_elec                                          &
+                      )
+                ELSE
+                    call write_traj_simple(                                       &
+                          istep, elapsed_time, tau, vel, force,                   &
+                          ekin, etot, ekin+etot, temp_new, walltime_s,            &
+                          nat, conv_elec                                          &
+                      )
+                ENDIF
             END IF
         ELSE
             print*, 'NOT PRINTING'

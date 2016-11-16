@@ -11,7 +11,7 @@ MODULE pinball
   REAL(DP), ALLOCATABLE     :: flipper_ewald_force_rigid(:,:)         ! LEONID: Forces due to ewald field (classic, flipper_force_ewald.f90)
   REAL(DP), ALLOCATABLE     :: flipper_forcelc(:,:)             ! LEONID: Forces from local potentials, flipper_force_lc.f90
   REAL(DP), ALLOCATABLE     :: flipper_forcenl(:,:)             ! LEONID: Forces from local potentials, flipper_force_lc.f90
-  REAL(DP), ALLOCATABLE     :: total_force(:,:)                 ! LEONID: Force as calculated by flipper_force_lc + flipper_ewald_force
+  !   REAL(DP), ALLOCATABLE     :: total_force(:,:)                 ! LEONID: Force as calculated by flipper_force_lc + flipper_ewald_force
   REAL(DP)                  ::  flipper_energy_external, &      ! LEONID: The external energy coming from the charge density interacting the the local pseudopotential
                                 flipper_ewld_energy_rigid, &    ! LEONID: Real for the ewald energy
                                 flipper_ewld_energy_pinball, &  ! LEONID: Real for the ewald energy
@@ -22,7 +22,10 @@ MODULE pinball
                                 flipper_epot, &                 ! LEONID: flipper_energy_external + flipper_ewld_energy
                                 flipper_cons_qty                ! LEONID: flipper_ewld_energy+flipper_energy_external+flipper_energy_kin
 
-  REAL(DP)                  :: flipper_nonlocal_correction
+  REAL(DP)                  :: flipper_nonlocal_correction, &
+                                flipper_local_factor, &
+                                flipper_ewald_pinball_factor, &
+                                flipper_ewald_rigid_factor
   INTEGER                   :: nr_of_pinballs                                  ! LEONID
 
   COMPLEX(DP), ALLOCATABLE  :: charge_g(:)                ! LEONID
@@ -86,62 +89,59 @@ MODULE pinball
 
         if (ionode) THEN
             print*, '    THIS IS A FLIPPER CALCULATION'
-            print*, '    NrPinballs  =  ', nr_of_pinballs
+            print*, ' nr_of_pinballs               =  ', nr_of_pinballs
+            print*, ' flipper_nonlocal_correation  = ', flipper_nonlocal_correction
+            print*, ' flipper_local_factor         = ', flipper_local_factor
+            print*, ' flipper_ewald_rigid_factor   = ', flipper_ewald_rigid_factor
+            print*, ' flipper_ewald_pinball_factor = ', flipper_ewald_pinball_factor
         end if
         call allocate_flipper()   
 
-!~          normal_prefix = prefix
-!~          print*, '&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&'
-         CALL read_rho(charge_density, nspin)
+
+        CALL read_rho(charge_density, nspin)
 
         iun=find_free_unit()
-        
-!~         print*, '!!!!!!!!!', prefix
+
+
         call diropn(iun, 'wfc', 2*nwordwfc, exst )
         call davcio (evc, 2*nwordwfc, iun, 1,-1) 
-    !~     call davcio (evc, 2*nwordwfc, iunwfc, 1,-1) 
-        
-           
-        !call  diropn_due (prefix_due,iun, 'wfc', 2*nwordwfc, exst )
-        ! call davcio (evc_due, 2*nwordwfc, iun, 1, - 1)
 
-        allocate(charge2(dffts%nnr))
-        charge2(:)=0.d0
-        do iv=1,nbnd !,2
-           psic=0.d0
-       !    if (iv==nbnd) then
-               psic(nls(1:npw))=evc(1:npw,iv)
-               psic(nlsm(1:npw))=CONJG(evc(1:npw,iv))
-       !    else
-       !        psic(nls(1:npw))=evc(1:npw,iv)+ ( 0.D0, 1.D0 ) *evc(1:npw,iv+1)
-       !        psic(nlsm(1:npw))=CONJG(evc(1:npw,iv)- ( 0.D0, 1.D0 ) *evc(1:npw,iv+1))
-       !    end if
-           call invfft ('Wave', psic, dffts)
-           charge2(1:dffts%nnr)=charge2(1:dffts%nnr)+dble(psic(1:dffts%nnr))**2.0 ! + dimag(psic(1:dffts%nnr))**2.0
-       !    if (iv /=nbnd) then
-       !       charge(1:dffts%nnr)=charge(1:dffts%nnr)+dimag(psic(1:dffts%nnr))**2.0
-       !    end if
-        end do
-        q_tot=0.
-        q_tot2=0.
-        q_tot3=0.
-        do i=1,dffts%nnr
-           q_tot=q_tot + ( 2.d0 * charge2(i) - omega * charge_density%of_r(i, 1) )**2
-           q_tot2=q_tot2 + 2.d0 *charge2(i)
-           q_tot3=q_tot3 + charge_density%of_r(i, 1) * omega
-        end do
-        q_tot = q_tot / (dffts%nr1*dffts%nr2*dffts%nr3)
-        q_tot2 = q_tot2 / (dffts%nr1*dffts%nr2*dffts%nr3)
-        q_tot3 = q_tot3 /    (dffts%nr1*dffts%nr2*dffts%nr3)
-        call mp_sum(q_tot, intra_bgrp_comm)
-        call mp_sum(q_tot2, intra_bgrp_comm)
-        call mp_sum(q_tot3, intra_bgrp_comm)
-        print*,'q_tot',q_tot
-        print*,'q_tot2',q_tot2
-        print*,'q_tot3',q_tot3
-        deallocate(charge2)
-        ! temp END
-         print*, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+
+! This whole bunch of code below provided a check to see whether the charge sums up
+! correctly from the wavefunctions.
+
+!~         allocate(charge2(dffts%nnr))
+!~         charge2(:)=0.d0
+!~         do iv=1,nbnd !,2
+!~            psic=0.d0
+!~ 
+!~            psic(nls(1:npw))=evc(1:npw,iv)
+!~            psic(nlsm(1:npw))=CONJG(evc(1:npw,iv))
+!~ 
+!~            call invfft ('Wave', psic, dffts)
+!~            charge2(1:dffts%nnr)=charge2(1:dffts%nnr)+dble(psic(1:dffts%nnr))**2.0 ! + dimag(psic(1:dffts%nnr))**2.0
+!~ 
+!~         end do
+!~         q_tot=0.
+!~         q_tot2=0.
+!~         q_tot3=0.
+!~         do i=1,dffts%nnr
+!~            q_tot=q_tot + ( 2.d0 * charge2(i) - omega * charge_density%of_r(i, 1) )**2
+!~            q_tot2=q_tot2 + 2.d0 *charge2(i)
+!~            q_tot3=q_tot3 + charge_density%of_r(i, 1) * omega
+!~         end do
+!~         q_tot = q_tot / (dffts%nr1*dffts%nr2*dffts%nr3)
+!~         q_tot2 = q_tot2 / (dffts%nr1*dffts%nr2*dffts%nr3)
+!~         q_tot3 = q_tot3 /    (dffts%nr1*dffts%nr2*dffts%nr3)
+!~         call mp_sum(q_tot, intra_bgrp_comm)
+!~         call mp_sum(q_tot2, intra_bgrp_comm)
+!~         call mp_sum(q_tot3, intra_bgrp_comm)
+!~         print*,'q_tot',q_tot
+!~         print*,'q_tot2',q_tot2
+!~         print*,'q_tot3',q_tot3
+!~         deallocate(charge2)
+!~         ! temp END
+!~          print*, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
 
          psic(:)=(0.d0,0.d0)
 
@@ -191,15 +191,30 @@ MODULE pinball
         
         ntyp_save = ntyp
         ntyp = 1
-
         CALL struc_fact( nat, tau, ntyp, ityp, ngm, g, bg, &
                    dfftp%nr1, dfftp%nr2, dfftp%nr3, strf, eigts1, eigts2, eigts3 )
-
-        CALL flipper_setlocal()
-
-        ! set ntyp back to what it originally was. Is that necessary?
         ntyp = ntyp_save
-        
+
+
+    !!!!!!!!!!!!!!!!!!!!!!!!!!! LOCAL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        ! Calculating the local contribution to potential energy:
+        CALL flipper_setlocal()
+        !
+        ! Adding the factor:
+        flipper_energy_external = flipper_local_factor*flipper_energy_external
+        CALL start_clock( 'pb_force_lc' )
+        CALL flipper_force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
+                 g, nl, nspin, gstart, gamma_only, vloc )
+        ! Applying the factor:
+        flipper_forcelc(:,:) = flipper_local_factor*flipper_forcelc(:,:)
+        CALL stop_clock( 'pb_force_lc' )
+
+
+
+
+    !!!!!!!!!!!!!!!!!!!!!!!!!!! EWALD !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ! ENERGY :
         ! ewald for all atoms PB-PB, PB-R, R-R:
         flipper_ewald_list(1:ntyp) = .true.
         flipper_ewld_energy_total = flipper_energy_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
@@ -209,12 +224,15 @@ MODULE pinball
         ! This is only pinball-pinball ionic interaction
         flipper_ewld_energy_pinball = flipper_energy_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, &
                 omega, g, gg, ngm, gcutm, gstart, gamma_only, strf )
-        
+
+
         ! For phonons??
         ! PB-R, R-R
         ! Put factors
-        flipper_ewld_energy = 1.2D0*(flipper_ewld_energy_total - flipper_ewld_energy_pinball) + 0.5D0*flipper_ewld_energy_pinball
-        
+        flipper_ewld_energy = &
+            flipper_ewald_rigid_factor*(flipper_ewld_energy_total - flipper_ewld_energy_pinball)  &
+            + flipper_ewald_pinball_factor*flipper_ewld_energy_pinball
+        ! FORCES:
         CALL start_clock( 'pb_ewald' )
         ! Calculating forces for PB-R
         flipper_ewald_list(2:ntyp) = .true.
@@ -222,7 +240,6 @@ MODULE pinball
         CALL flipper_force_ewald( alat, nat, ntyp, ityp, zv, at, bg, tau, omega, g, &
                  gg, ngm, gstart, gamma_only, gcutm, strf )
         flipper_ewald_force_rigid(:,:) = flipper_ewald_force(:,:)
-
         ! Calculating forces for PB-PB
         flipper_ewald_list(2:ntyp) = .false.
         flipper_ewald_list(1) = .true.
@@ -230,23 +247,22 @@ MODULE pinball
                  gg, ngm, gstart, gamma_only, gcutm, strf )
         flipper_ewald_force_pinball(:,:) = flipper_ewald_force(:,:)
 
-        flipper_ewald_force(:,:) =  0.5D0*flipper_ewald_force_pinball(:,:) +  0.5D0*flipper_ewald_force_rigid(:,:)
+        flipper_ewald_force(:,:) =  &
+                flipper_ewald_pinball_factor*flipper_ewald_force_pinball(:,:) &
+                +  flipper_ewald_rigid_factor*flipper_ewald_force_rigid(:,:)
         CALL stop_clock( 'pb_ewald' )
 
-        CALL start_clock( 'pb_force_lc' )
-        CALL flipper_force_lc( nat, tau, ityp, alat, omega, ngm, ngl, igtongl, &
-                 g, nl, nspin, gstart, gamma_only, vloc )
-        CALL stop_clock( 'pb_force_lc' )
 
-        ! Applying the correction to the nonlocal term based on a linear factor
+
+    !!!!!!!!!!!!!!!!!!!!!!!! NONLOCAL  !!!!!!!!!!!!!!!!!!!!!!!!!!
+
     
         CALL start_clock( 'pb_nonloc' )
         IF ( flipper_do_nonloc ) THEN
-
             CALL init_us_2( npw, igk, xk(1,1), vkb )
             CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
-            
-            flipper_forcenl(:,:) =  : * flipper_forcenl(:,:)
+            ! Applying the correction to the nonlocal term based on a linear factor
+            flipper_forcenl(:,:) = flipper_nonlocal_correction * flipper_forcenl(:,:)
             flipper_nlenergy     = flipper_nonlocal_correction*flipper_nlenergy
         ELSE
             flipper_forcenl(:,:) =  0.D0
@@ -254,18 +270,26 @@ MODULE pinball
         ENDIF
         CALL stop_clock( 'pb_nonloc' )
 
+
+        ! flipper_forcelc(:,:) = 0.99057635*flipper_forcelc(:,:)
+
+    !!!!!!!!!!!!!!!!!!!!!!! SUMMING THE FORCES !!!!!!!!!!!!!!!!!!!!!!!
+
+
         DO ipol = 1, 3
              DO na = 1, nr_of_pinballs
-                total_force(ipol,na) = &
+                force(ipol,na) = &
                                 flipper_ewald_force(ipol,na)    + &
                                 flipper_forcelc(ipol,na)        + &
                                 flipper_forcenl(ipol, na)
             END DO
+            ! In the static picture, all other forces are 0:
+            DO na = nr_of_pinballs+1, nat
+                force(ipol, na) = 0.D0
+            END DO
         END DO
-        force(:,:)=0.d0
-        do iat=1,nr_of_pinballs
-            force(1:3,iat)=total_force(1:3,iat)
-        end do
+
+
 
 
 ! 9036 FORMAT(5X,'atom ',I4,' type ',I2,'   force = ',3F14.8)
@@ -281,7 +305,7 @@ MODULE pinball
         DEALLOCATE(flipper_ewald_force_pinball)                 ! LEONID
         DEALLOCATE(flipper_ewald_force_rigid)                 ! LEONID
         DEALLOCATE(flipper_forcelc)                 ! LEONID
-        DEALLOCATE(total_force)                 ! LEONID
+        ! DEALLOCATE(total_force)                 ! LEONID
         DEALLOCATE(charge_g)
         DEALLOCATE(evc_grad)
         DEALLOCATE(flipper_ewald_list)
@@ -299,7 +323,7 @@ MODULE pinball
         ALLOCATE(flipper_ewald_force_pinball( 3, nr_of_pinballs ))
         ALLOCATE(flipper_ewald_force_rigid( 3, nr_of_pinballs ))
         ALLOCATE(flipper_forcelc( 3, nr_of_pinballs))
-        ALLOCATE(total_force( 3, nr_of_pinballs))
+        ! ALLOCATE(total_force( 3, nr_of_pinballs))
         ALLOCATE(charge_g(ngm)) 
         ALLOCATE(flipper_forcenl( 3, nat ))
         ALLOCATE(evc_grad(3, npwx*npol, nbnd ) )
@@ -343,7 +367,7 @@ MODULE pinball
       
       vltot_g(:)=(0.d0,0.d0)
 
-      DO nt = 1, ntyp
+      DO nt = 1, 1   !  ntyp
           DO ng = 1, ngm
               vltot_g (ng)                    = vltot_g(ng) + vloc (igtongl (ng), nt) * strf (ng, nt)
                  ! Useful to get the real part of the VLTOT

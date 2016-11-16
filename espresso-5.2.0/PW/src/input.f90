@@ -154,6 +154,9 @@ SUBROUTINE iosys()
   !LEONID:
   USE pinball,       ONLY : lflipper_       => lflipper,         &
                             flipper_nonlocal_correction_ => flipper_nonlocal_correction, &
+                            flipper_local_factor_ => flipper_local_factor, &
+                            flipper_ewald_rigid_factor_ => flipper_ewald_rigid_factor, &
+                            flipper_ewald_pinball_factor_ => flipper_ewald_pinball_factor, &
                             flipper_do_nonloc_ => flipper_do_nonloc
   USE hustler,       ONLY : lhustle_        => lhustle,         &
                             hustler_nat_    => hustler_nat !,     &
@@ -243,7 +246,10 @@ SUBROUTINE iosys()
                                one_atom_occupations,                          &
                                esm_bc, esm_efield, esm_w, esm_nfit,           &
                                space_group, uniqueb, origin_choice,           &
-                               rhombohedral, flipper_nonlocal_correction
+                               rhombohedral, flipper_nonlocal_correction,     &
+                               flipper_local_factor,                          &
+                               flipper_ewald_pinball_factor,                  &
+                               flipper_ewald_rigid_factor
   !
   ! ... ELECTRONS namelist
   !
@@ -1154,11 +1160,15 @@ SUBROUTINE iosys()
   ! FOR hustler
   lhustle_                = lhustle
   hustler_nat_            = hustler_nat
+
   ! FOR pinball
   
-  lflipper_               = lflipper
-  flipper_nonlocal_correction_ = flipper_nonlocal_correction
-  flipper_do_nonloc_ = flipper_do_nonloc
+  lflipper_                     = lflipper
+  flipper_nonlocal_correction_  = flipper_nonlocal_correction
+  flipper_local_factor_         = flipper_local_factor
+  flipper_ewald_pinball_factor_ = flipper_ewald_pinball_factor
+  flipper_ewald_rigid_factor_   = flipper_ewald_rigid_factor
+  flipper_do_nonloc_            = flipper_do_nonloc
 
   !
   diago_full_acc_ = diago_full_acc

@@ -668,6 +668,7 @@ MODULE read_namelists_module
        CALL mp_bcast( lhustle,       ionode_id, intra_image_comm )              ! LEONID
        CALL mp_bcast( lflipper,      ionode_id, intra_image_comm )              ! LEONID
        CALL mp_bcast( ldecompose_forces, ionode_id, intra_image_comm )          ! LEONID
+       CALL mp_bcast( ldecompose_ewald, ionode_id, intra_image_comm )          ! LEONID
        CALL mp_bcast( flipper_do_nonloc, ionode_id, intra_image_comm )          ! LEONID
        CALL mp_bcast( max_seconds,   ionode_id, intra_image_comm )
        CALL mp_bcast( ekin_conv_thr, ionode_id, intra_image_comm )
@@ -837,6 +838,10 @@ MODULE read_namelists_module
        
        ! LEONID for pinball
        CALL mp_bcast( flipper_nonlocal_correction, ionode_id, intra_image_comm )
+       CALL mp_bcast( flipper_local_factor, ionode_id, intra_image_comm )
+       CALL mp_bcast( flipper_ewald_pinball_factor, ionode_id, intra_image_comm )
+       CALL mp_bcast( flipper_ewald_rigid_factor, ionode_id, intra_image_comm )
+       
 
        RETURN
        !
