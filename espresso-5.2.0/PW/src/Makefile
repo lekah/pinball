@@ -32,6 +32,7 @@ atomic_wfc_mod.o \
 average_pp.o \
 acfdt_in_pw.o \
 newd.o \
+becmod_flipper.o \
 bp_mod.o \
 bp_c_phase.o \
 bp_calc_btq.o \

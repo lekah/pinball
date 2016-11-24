@@ -158,7 +158,8 @@ SUBROUTINE pre_init()
   ENDDO
 
 
-  IF (lflipper) nh(2:nsp) = 0  ! LEONID
+  ! IF (lflipper) nh(2:nsp) = 0  ! LEONID
+  ! Took line above out because it crashed with different pseudos
   !
   ! calculate the maximum number of beta functions
   !

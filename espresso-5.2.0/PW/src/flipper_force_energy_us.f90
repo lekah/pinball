@@ -28,10 +28,10 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   USE spin_orb,             ONLY : lspinorb
   USE io_files,             ONLY : iunwfc, nwordwfc, iunigk
   USE buffers,              ONLY : get_buffer
-  USE becmod,               ONLY : calbec, becp, bec_type, allocate_bec_type, &
-                                   deallocate_bec_type
-!~   USE becmod_flipper,       ONLY : calbec, becp, bec_type, allocate_bec_type, &
+!~   USE becmod,               ONLY : calbec, becp, bec_type, allocate_bec_type, &
 !~                                    deallocate_bec_type
+  USE becmod_flipper,       ONLY : calbec, becp, bec_type, allocate_bec_type, &
+                                   deallocate_bec_type
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum, mp_get_comm_null

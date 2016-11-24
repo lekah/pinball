@@ -145,6 +145,8 @@ becmod_flipper.o : ../../Modules/mp.o
 becmod_flipper.o : ../../Modules/mp_bands.o
 becmod_flipper.o : ../../Modules/noncol.o
 becmod_flipper.o : ../../Modules/recvec.o
+becmod_flipper.o : ../../Modules/uspp.o
+becmod_flipper.o : pinball.o
 bp_c_phase.o : ../../Modules/becmod.o
 bp_c_phase.o : ../../Modules/cell_base.o
 bp_c_phase.o : ../../Modules/constants.o
@@ -219,12 +221,6 @@ c_phase_field.o : ../../Modules/uspp.o
 c_phase_field.o : bp_mod.o
 c_phase_field.o : buffers.o
 c_phase_field.o : pwcom.o
-calbec_gamma_flipper.o : ../../Modules/control_flags.o
-calbec_gamma_flipper.o : ../../Modules/kind.o
-calbec_gamma_flipper.o : ../../Modules/mp.o
-calbec_gamma_flipper.o : ../../Modules/noncol.o
-calbec_gamma_flipper.o : ../../Modules/recvec.o
-calbec_gamma_flipper.o : ../../Modules/uspp.o
 ccgdiagg.o : ../../Modules/constants.o
 ccgdiagg.o : ../../Modules/io_global.o
 ccgdiagg.o : ../../Modules/kind.o
