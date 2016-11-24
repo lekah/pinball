@@ -30,10 +30,13 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   USE buffers,              ONLY : get_buffer
   USE becmod,               ONLY : calbec, becp, bec_type, allocate_bec_type, &
                                    deallocate_bec_type
+!~   USE becmod_flipper,       ONLY : calbec, becp, bec_type, allocate_bec_type, &
+!~                                    deallocate_bec_type
   USE mp_pools,             ONLY : inter_pool_comm
   USE mp_bands,             ONLY : intra_bgrp_comm
   USE mp,                   ONLY : mp_sum, mp_get_comm_null
   USE pinball
+  
   !
   IMPLICIT NONE
   !
@@ -50,7 +53,6 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
   forcenl(:,:) = 0.D0
   ener=0.d0
   
-
   !
   CALL allocate_bec_type ( nkb, nbnd, becp, intra_bgrp_comm )   
   CALL allocate_bec_type ( nkb, nbnd, dbecp, intra_bgrp_comm )   
@@ -71,13 +73,16 @@ SUBROUTINE flipper_force_energy_us( forcenl, ener)
      !
      IF ( lsda ) current_spin = isk(ik)
      npw = ngk (ik)
-     IF ( nks > 1 ) THEN
-        READ( iunigk ) igk
-        CALL get_buffer ( evc, nwordwfc, iunwfc, ik )
-        IF ( nkb > 0 ) &
-             CALL init_us_2( npw, igk, xk(1,ik), vkb )
-     END IF
+     ! LEONID Commented out that code because in the pinball we're not in this
+     ! case (so far), so just for clarity
+     !IF ( nks > 1 ) THEN
+     !   READ( iunigk ) igk
+     !   CALL get_buffer ( evc, nwordwfc, iunwfc, ik )
+     !   IF ( nkb > 0 ) &
+     !        CALL init_us_2( npw, igk, xk(1,ik), vkb )
+     ! END IF
      !
+     
      CALL calbec ( npw, vkb, evc, becp )
 
      !!!!!!! !trick for using old code for energy computation

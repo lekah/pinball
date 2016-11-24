@@ -136,6 +136,7 @@ SUBROUTINE pre_init()
   USE ions_base,        ONLY : nat, nsp, ityp
   USE uspp_param,       ONLY : upf, lmaxkb, nh, nhm, nbetam
   USE uspp,             ONLY : nkb, nkbus
+  USE pinball,          ONLY : lflipper
   IMPLICIT NONE
   INTEGER :: na, nt, nb
   !
@@ -155,6 +156,9 @@ SUBROUTINE pre_init()
      ENDDO
      !
   ENDDO
+
+
+  IF (lflipper) nh(2:nsp) = 0  ! LEONID
   !
   ! calculate the maximum number of beta functions
   !
@@ -170,6 +174,5 @@ SUBROUTINE pre_init()
      nkb = nkb + nh (nt)
      if (upf(nt)%tvanp) nkbus = nkbus + nh (nt)
   enddo
-
 
 END SUBROUTINE pre_init

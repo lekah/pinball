@@ -262,7 +262,9 @@ MODULE pinball
             ! Here we can optimize even more, namely not computing vkb
             ! for host matrix.
             ! We usually don't need the non-pinball part
+            CALL start_clock( 'init_us_2_pb' )
             CALL init_us_2( npw, igk, xk(1,1), vkb )
+            CALL stop_clock( 'init_us_2_pb' )
             CALL flipper_force_energy_us (flipper_forcenl, flipper_nlenergy)
             ! Applying the correction to the nonlocal term based on a linear factor
             flipper_forcenl(:,:) = flipper_nonlocal_correction * flipper_forcenl(:,:)
