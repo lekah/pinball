@@ -20,3 +20,8 @@ version.f90.tmp
 calculations
 *.swp
 bin
+espresso-5.2.0/PW/src/input_tmp.in
+espresso-5.2.0/S3DE/README
+espresso-5.2.0/S3DE/iotk/iotk
+espresso-5.2.0/input_tmp.in
+espresso-5.2.0/iotk
