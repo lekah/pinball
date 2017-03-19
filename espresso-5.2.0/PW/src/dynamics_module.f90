@@ -28,7 +28,7 @@ MODULE dynamics_module
    USE basic_algebra_routines
    USE io_files, ONLY : iunpos,iunevp,iunvel, iunfor !aris
    USE io_global, ONLY : ionode !aris
-   use pinball, ONLY : lflipper
+   use pinball, ONLY : lflipper, nr_of_pinballs
    !
    IMPLICIT NONE
    !
@@ -731,22 +731,40 @@ CONTAINS
             kt = temperature / ry_to_kelvin
             nat_moved = 0
             !
-            DO na = 1, nat
+            if ( lflipper )  THEN
+                DO na = 1, nr_of_pinballs
+                   !
+                   IF ( randy() < 1.D0 / dble( nraise ) ) THEN
+                      !
+                      nat_moved = nat_moved + 1
+                      sigma = sqrt( kt / mass(na) )
+                      !
+                      ! ... N.B. velocities must in a.u. units of alat and are zero
+                      ! ...      for fixed ions
+                      !
+                      vel(:,na) = dble( if_pos(:,na) ) * &
+                                  gauss_dist( 0.D0, sigma, 3 ) / alat
+                      !
+                   ENDIF
+                ENDDO
+            ELSE
+                DO na = 1, nat
+                   !
+                   IF ( randy() < 1.D0 / dble( nraise ) ) THEN
+                      !
+                      nat_moved = nat_moved + 1
+                      sigma = sqrt( kt / mass(na) )
+                      !
+                      ! ... N.B. velocities must in a.u. units of alat and are zero
+                      ! ...      for fixed ions
+                      !
+                      vel(:,na) = dble( if_pos(:,na) ) * &
+                                  gauss_dist( 0.D0, sigma, 3 ) / alat
+                      !
+                   ENDIF
+                ENDDO
+            ENDIF
                !
-               IF ( randy() < 1.D0 / dble( nraise ) ) THEN
-                  !
-                  nat_moved = nat_moved + 1
-                  sigma = sqrt( kt / mass(na) )
-                  !
-                  ! ... N.B. velocities must in a.u. units of alat and are zero
-                  ! ...      for fixed ions
-                  !
-                  vel(:,na) = dble( if_pos(:,na) ) * &
-                              gauss_dist( 0.D0, sigma, 3 ) / alat
-                  !
-               ENDIF
-               !
-            ENDDO
             !
             IF ( nat_moved > 0) WRITE( UNIT = stdout, &
                FMT = '(/,5X,"Andersen thermostat: ",I4," collisions")' ) &
