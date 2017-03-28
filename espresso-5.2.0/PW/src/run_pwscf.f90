@@ -102,7 +102,13 @@ SUBROUTINE run_pwscf ( exit_status )
      ! ... electronic self-consistency or band structure calculation
      !
      
-     IF ( .NOT. lflipper) THEN
+     IF ( lflipper) THEN
+        IF ( check_stop_now() ) THEN
+            exit_status = 255
+            ! CALL punch( 'config' )
+            RETURN
+        ENDIF
+     ELSE
          IF ( .NOT. lscf) THEN
             CALL non_scf ()
          ELSE
