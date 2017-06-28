@@ -3,8 +3,10 @@ MODULE hustler
 
     USE basic_algebra_routines  ! norm
     USE input_parameters,       only : hustlerfile
+    USE mp,                     ONLY : mp_bcast
+    USE mp_images,              ONLY : intra_image_comm
     USE io_files,               only : iunhustle, tmp_dir
-    USE io_global,              ONLY : stdout, ionode
+    USE io_global,              ONLY : stdout, ionode, ionode_id
     USE kinds,                  ONLY : DP
     USE constants,              ONLY : au_ps, eps8 , ry_to_kelvin ,amu_ry
     USE input_parameters,       ONLY : ldecompose_forces, ldecompose_ewald
@@ -23,10 +25,10 @@ MODULE hustler
                                     flipper_energy_external,                    &
                                     flipper_energy_kin,                         &
                                     flipper_cons_qty, flipper_nlenergy
-                                    
+
     USE control_flags,          ONLY : iprint, istep
     USE ener,                   ONLY : etot
-    
+
     USE ions_base,              ONLY : nat, nsp, ityp, tau, if_pos, atm, amass
     USE cell_base,              ONLY : alat, omega
     USE ener,                   ONLY : etot
@@ -51,7 +53,7 @@ MODULE hustler
     INTEGER hustler_nat
 
 
-CONTAINS 
+CONTAINS
 
     SUBROUTINE init_hustler()
         IF ( ionode ) THEN
@@ -88,12 +90,14 @@ CONTAINS
                 tau(1,i) = x / alat
                 tau(2,i) = y / alat
                 tau(3,i) = z / alat
-            END DO        
+            END DO
             DO na = 1, nat
                 mass(na) = amass( ityp(na) ) * amu_ry
             ENDDO
+
             tau_new(:,:)= tau(:,:)
         END IF
+        CALL mp_bcast( tau, ionode_id, intra_image_comm )
 
     END SUBROUTINE init_hustler
 
@@ -107,7 +111,7 @@ CONTAINS
         REAL(DP) :: walltime_s
         REAL(DP), EXTERNAL :: get_clock
         INTEGER :: io
-    
+
 
         print*, "HUSTLER (ISTEP0", istep0, ") UPDATING POSITIONS"
 
@@ -140,9 +144,9 @@ CONTAINS
                                 ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
                 ! print*, flipper_energy_kin, mass(na)
             ENDDO
-          
+
             flipper_energy_kin = flipper_energy_kin * alat**2
-            
+
             ekin = flipper_energy_kin
             etot = flipper_energy_external + flipper_ewld_energy + flipper_nlenergy
             flipper_cons_qty  =  ekin + etot
@@ -155,7 +159,7 @@ CONTAINS
             ENDDO
             !
             ekin = ekin*alat**2
-        end if    
+        end if
 
         temp_new = 2.D0 / dble( ndof ) * ekin * ry_to_kelvin
         temp_av = temp_av + temp_new
