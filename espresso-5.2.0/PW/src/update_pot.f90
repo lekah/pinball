@@ -465,7 +465,7 @@ SUBROUTINE extrapolate_wfcs( wfc_extr )
   USE uspp,                 ONLY : nkb, vkb, okvan
   USE wavefunctions_module, ONLY : evc
   USE noncollin_module,     ONLY : noncolin, npol
-  USE control_flags,        ONLY : gamma_only
+  USE control_flags,        ONLY : gamma_only, iverbosity
   USE becmod,               ONLY : allocate_bec_type, deallocate_bec_type, &
                                    bec_type, becp, calbec
   USE mp_images,            ONLY : intra_image_comm
@@ -517,15 +517,18 @@ SUBROUTINE extrapolate_wfcs( wfc_extr )
      IF ( wfc_extr > 2 .OR. wfc_order > 2 ) &
         CALL diropn( iunoldwfc2, 'old2wfc', 2*nwordwfc, exst )
      !
-     IF ( wfc_extr == 2 ) THEN
-        !
-        WRITE( stdout, '(/5X,"first order wave-functions extrapolation")' )
-        !
-     ELSE
-        !
-        WRITE( stdout, '(/5X,"second order wave-functions extrapolation")' )
-        !
-     END IF
+     IF ( iverbosity > 0 ) THEN
+     
+         IF ( wfc_extr == 2 ) THEN
+            !
+            WRITE( stdout, '(/5X,"first order wave-functions extrapolation")' )
+            !
+         ELSE
+            !
+            WRITE( stdout, '(/5X,"second order wave-functions extrapolation")' )
+            !
+         END IF
+     ENDIF
      !
      ALLOCATE( evcold( npwx*npol, nbnd ), aux( npwx*npol, nbnd ) )
      ALLOCATE( sp_m( nbnd, nbnd ), u_m( nbnd, nbnd ), w_m( nbnd, nbnd ), ew( nbnd ) )

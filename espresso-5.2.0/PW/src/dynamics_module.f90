@@ -234,13 +234,16 @@ CONTAINS
       ! The istep0, istep augmentations was here
 
       !
-      WRITE( UNIT = stdout, &
-             FMT = '(/,5X,"Entering Dynamics:",T28, /, &
-                    & 10X, "istep",T30," = ", I5, /, &
-                    & 10X, "clock_time",T30," = ", F10.4, /, &
-                    & 10X,"simulation_time_ps", T30, " = ",F10.4,/)' ) &
-          istep, walltime_s, elapsed_time
-      !
+      IF ( iverbosity > 0 ) THEN
+     
+          WRITE( UNIT = stdout, &
+                 FMT = '(/,5X,"Entering Dynamics:",T28, /, &
+                        & 10X, "istep",T30," = ", I5, /, &
+                        & 10X, "clock_time",T30," = ", F10.4, /, &
+                        & 10X,"simulation_time_ps", T30, " = ",F10.4,/)' ) &
+              istep, walltime_s, elapsed_time
+          !
+      ENDIF
 
       IF ( control_temp ) THEN
         CALL apply_thermostat()
@@ -476,11 +479,11 @@ CONTAINS
         ELSE
           ! LEONID: Let's reduce the output of the MD
             if (mod(istep, iprint) .eq. 0) THEN
-                WRITE( stdout, '(10X,"kinetic_energy      = ",F14.8," Ry",/,  &
-                             & 10X,"potential_energy    = ",F14.8," Ry",/,  &
-                             & 10X,"total_energy        = ",F14.8," Ry",/,  &
-                             & 10X,"temperature         = ",F14.8," K ")' ) &
-                  ekin, etot, ( ekin  + etot ), temp_new
+                ! WRITE( stdout, '(10X,"kinetic_energy      = ",F14.8," Ry",/,  &
+                !             & 10X,"potential_energy    = ",F14.8," Ry",/,  &
+                !             & 10X,"total_energy        = ",F14.8," Ry",/,  &
+                !             & 10X,"temperature         = ",F14.8," K ")' ) &
+                !  ekin, etot, ( ekin  + etot ), temp_new
                 IF (ldecompose_forces) THEN
                     call write_traj_decompose_forces(                           &
                             istep, elapsed_time, tau, vel,                      &

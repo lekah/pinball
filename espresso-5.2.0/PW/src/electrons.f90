@@ -657,7 +657,7 @@ SUBROUTINE electrons_scf ( printout )
      !
      if ( iverbosity > 0) WRITE( stdout, 9000 ) get_clock( 'PWSCF' )
      !
-     IF ( conv_elec ) WRITE( stdout, 9101 )
+     IF ( conv_elec .and. iverbosity > 0) WRITE( stdout, 9101 )
      !
      IF ( conv_elec .OR. MOD( iter, iprint ) == 0 ) THEN
         !
@@ -740,7 +740,9 @@ SUBROUTINE electrons_scf ( printout )
         !
         IF ( do_comp_esm ) CALL esm_printpot()
         !
-        WRITE( stdout, 9110 ) iter
+        IF ( iverbosity > 0 ) THEN
+            WRITE( stdout, 9110 ) iter
+        ENDIF
         !
         ! ... jump to the end
         !
@@ -761,7 +763,9 @@ SUBROUTINE electrons_scf ( printout )
      !
   END DO
   !
-  WRITE( stdout, 9101 )
+  IF ( iverbosity > 0 ) THEN
+     WRITE( stdout, 9101 )
+  ENDIF
   WRITE( stdout, 9120 ) iter
   !
 10  CALL flush_unit( stdout )
