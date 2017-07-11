@@ -143,7 +143,7 @@ CONTAINS
       INTEGER  :: na
       ! istep0 counts MD steps done during this run
       ! (istep counts instead all MD steps, including those of previous runs)
-      INTEGER, SAVE :: istep0 = 0 
+      INTEGER, SAVE :: istep0 = 0
 #if defined (__NPT)
       REAL(DP) :: chi, press_new
 #endif
@@ -151,7 +151,7 @@ CONTAINS
       REAL(DP), EXTERNAL :: dnrm2
       REAL(DP) :: kstress(3,3)
       INTEGER :: i, j
-      
+
       ! LEONID
       REAL(DP) :: walltime_s
       REAL(DP), EXTERNAL :: get_clock
@@ -159,12 +159,12 @@ CONTAINS
       ! ... the number of degrees of freedom
       !
       ! LEONID: For the flipper, the number of degrees of freedom is given by the ions that can move, ergo the pinballs
-      ! 
+      !
       IF ( lflipper) THEN
-        
-        
+
+
         ndof = 3*nr_of_pinballs
-      
+
       ELSE
           IF ( ANY( if_pos(:,:) == 0 ) ) THEN
              !
@@ -230,7 +230,7 @@ CONTAINS
       ENDIF
       !
       walltime_s = get_clock( 'PWSCF' )
-      
+
       ! The istep0, istep augmentations was here
 
       !
@@ -241,18 +241,18 @@ CONTAINS
                     & 10X,"simulation_time_ps", T30, " = ",F10.4,/)' ) &
           istep, walltime_s, elapsed_time
       !
+
       IF ( control_temp ) THEN
         CALL apply_thermostat()
-        
-        
-        if (istep0 + 1 == nstep_thermo) THEN 
+
+        if (istep0 + 1 == nstep_thermo) THEN
             control_temp = .false.
         endif
          ! LEONID: Changing, so that if istep == nstep_thermo, control_temp is false
 !~       ELSEIF  THEN
 !~         CALL apply_thermostat()
       ENDIF
-      
+
       !
       ! ... we first remove the component of the force along the
       ! ... constraint gradient ( this constitutes the initial
@@ -267,6 +267,7 @@ CONTAINS
       !
       ! ... Verlet integration scheme
       !
+
       IF (vel_defined) THEN
          !
          ! ... remove the component of the velocity along the
@@ -283,11 +284,11 @@ CONTAINS
          tau_new(:,:) = 2.D0*tau(:,:) - tau_old(:,:) + acc(:,:) * dt**2
          !
       ENDIF
-      
-      
-      
+
+
+
        !Aris. Do not move the com for flipper
-      IF (.NOT. lflipper) then 
+      IF (.NOT. lflipper) then
           IF ( .NOT. ANY( if_pos(:,:) == 0 ) ) THEN
             !
             ! ... if no atom has been fixed  we compute the displacement of the
@@ -345,6 +346,7 @@ CONTAINS
       ! ... the linear momentum and the kinetic energy are computed here
       !
       vel = ( tau_new - tau_old ) / ( 2.D0*dt ) * dble( if_pos )
+
       !
     ! LEONID: Computing kinetic energy and temperature for the flipper
       if (lflipper) then
@@ -355,7 +357,7 @@ CONTAINS
              ml(:) = ml(:) + vel(:,na) * mass(na)
              flipper_energy_kin  = flipper_energy_kin + 0.5D0 * mass(na) * &
                             ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
-            
+
             ! LEONID: I supppose we do not need to calculate kstress
 !~              do i = 1, 3
 !~                  do j = 1, 3
@@ -364,7 +366,7 @@ CONTAINS
 !~              enddo
              !
           ENDDO
-          
+
           flipper_energy_kin = flipper_energy_kin * alat**2
           ! flipper_temp = 2.D0 / dble( nr_of_pinballs ) * flipper_energy_kin * ry_to_kelvin
           ekin = flipper_energy_kin
@@ -391,7 +393,7 @@ CONTAINS
           ekin = ekin*alat**2
 !
 
-      end if    
+      end if
 !
       kstress = kstress * alat**2 / omega
       !
@@ -447,7 +449,7 @@ CONTAINS
                              & 5X,"Ekin + Etot (const)   = ",F14.8," Ry",/,  &
                              & 5X,"temperature           = ",F14.8," K ")' ) &
                     ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
-                    
+
                 IF (ldecompose_ewald) THEN
                     call write_traj_decompose_ewald(                            &
                         istep, elapsed_time, tau, vel, force, flipper_forcelc,  &
@@ -478,7 +480,7 @@ CONTAINS
                              & 10X,"potential_energy    = ",F14.8," Ry",/,  &
                              & 10X,"total_energy        = ",F14.8," Ry",/,  &
                              & 10X,"temperature         = ",F14.8," K ")' ) &
-                  ekin, etot, ( ekin  + etot ), temp_new    
+                  ekin, etot, ( ekin  + etot ), temp_new
                 IF (ldecompose_forces) THEN
                     call write_traj_decompose_forces(                           &
                             istep, elapsed_time, tau, vel,                      &
@@ -492,7 +494,7 @@ CONTAINS
                             nat, conv_elec                                        &
                         )
                 ENDIF
-                
+
             endif
             IF (lstres) WRITE ( stdout, &
             '(5X,"Ions kinetic stress = ",F10.2," (kbar)",/3(27X,3F10.2/)/)') &
@@ -523,7 +525,7 @@ CONTAINS
       ! ... here the tau are shifted
       ! LEONID: I moved this to this point, since before, since tau was overwritten with
       ! future positions before being printed
-      ! 
+      !
 
       elapsed_time = elapsed_time + dt*2.D0*au_ps
       !
@@ -541,7 +543,7 @@ CONTAINS
       ! ... elapsed_time is in picoseconds
       !
 
-      
+
 
       !
    CONTAINS
@@ -630,6 +632,31 @@ CONTAINS
          IF ( tv0rd ) THEN ! initial velocities available from input file
             !
             vel(:,:) = vel(:,:) / alat
+            if (lflipper) then
+                  flipper_energy_kin= 0.D0  ! LEONID: Here we calculate the kinetic energy of the flipper
+                  ! LEONID: Only the pinballs contribute:
+                  DO na = 1, nr_of_pinballs
+                     !
+                     flipper_energy_kin  = flipper_energy_kin + 0.5D0 * mass(na) * &
+                                    ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
+                  ENDDO
+
+                  flipper_energy_kin = flipper_energy_kin * alat**2
+                  ekin = flipper_energy_kin
+              else
+                  ekin = 0.D0
+                  !
+                  DO na = 1, nat
+                     !
+                     ekin  = ekin + 0.5D0 * mass(na) * &
+                                    ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
+                  ENDDO
+                  !
+                  ekin = ekin*alat**2
+              end if
+
+              temp_new = 2.D0 / dble( ndof ) * ekin * ry_to_kelvin
+
             !
          ELSEIF ( control_temp ) THEN
             !
@@ -663,11 +690,12 @@ CONTAINS
          !
          INTEGER :: nat_moved
          REAL(DP) :: sigma, kt
-         !
+
          IF(.not.vel_defined)THEN
             vel(:,:) = (tau(:,:) - tau_old(:,:)) / dt
          ENDIF
          !
+
          SELECT CASE( trim( thermostat ) )
          CASE( 'rescaling' )
             IF ( abs (temp_new-temperature) > tolp ) THEN
@@ -809,7 +837,7 @@ CONTAINS
          !
          ! ... starting velocities have a Maxwell-Boltzmann distribution
          !
-         
+
          if ( lflipper) THEN
             vel(:,:) = 0.d0
             do na = 1, nr_of_pinballs
@@ -818,7 +846,7 @@ CONTAINS
             enddo
             ml(:) = 0.D0
             !
-            
+
                !
             total_mass = SUM ( mass(1:nr_of_pinballs) )
             DO na = 1, nr_of_pinballs
@@ -827,7 +855,7 @@ CONTAINS
             ml(:) = ml(:) / total_mass
                !
             !
-         
+
             !
             ek = 0.D0
             !
@@ -886,7 +914,7 @@ CONTAINS
                 !
                 ml(:) = 0.D0
                 !
-                
+
                 IF ( .NOT. ANY( if_pos(:,:) == 0 ) ) THEN
                    !
                    total_mass = SUM ( mass(1:nat) )
@@ -914,13 +942,13 @@ CONTAINS
              ! ... temperature is usually changed. Set again the temperature to the
              ! ... right value.
              !
-             
+
          endif
          !
          system_temp = 2.D0 / dble( ndof ) * ek * alat**2 * ry_to_kelvin
-         
+
          CALL thermalize( 0, system_temp, temperature )
-         
+
          !
       END SUBROUTINE start_therm
       !
@@ -1687,7 +1715,7 @@ CONTAINS
       !
       ! At this moment works only with langevin dynamics !!
       ! For the formula see R.J.Rossky, JCP, 69, 4628(1978)
-      
+
      USE ions_base,      ONLY : nat, ityp, tau, if_pos,atm
      USE cell_base,      ONLY : alat
      USE ener,           ONLY : etot
@@ -1695,18 +1723,18 @@ CONTAINS
      USE control_flags,  ONLY : istep, nstep, conv_ions, lconstrain, llang
      USE constraints_module, ONLY : remove_constr_force, check_constraint
      USE random_numbers, ONLY : randy
-     use io_files,      only : prefix     
+     use io_files,      only : prefix
      use io_global,      only : ionode
      USE constants, ONLY : bohr_radius_angs
 
      implicit none
-     
+
      logical :: accept
      real(dp) :: kt,sigma2,&
                  T_ij,T_ji,boltzman_ji,& ! boltzman_ji=exp[-(etot_new-etot_old)/kt]
                  temp,p_smc                  ! *_smart means *_old, the quantity of the
                                         ! previous step
-                                    
+
      integer :: ia, ip
 
      if(.not. llang) call errore( ' smart_MC ', "At this moment, smart_MC works&
@@ -1730,7 +1758,7 @@ CONTAINS
      endif
 
      kt = temperature / ry_to_kelvin
-     sigma2 =  2.D0*dt*kt 
+     sigma2 =  2.D0*dt*kt
 
      T_ij=0.0d0
      T_ji=0.0d0
@@ -1742,7 +1770,7 @@ CONTAINS
      enddo
      T_ij=exp(-T_ij/(2*sigma2))
      T_ji=exp(-T_ji/(2*sigma2))
- 
+
      boltzman_ji=exp(-(etot-etot_smart)/kt)
 
      p_smc=T_ji*boltzman_ji/T_ij
@@ -1751,7 +1779,7 @@ CONTAINS
      write(stdout, '(5x,"The new energy is:",3x,F17.8," Ry")') etot
      write(stdout, '(5x,"The possibility to accept this step is:",3x,F10.7/)') p_smc
      write(stdout, '(5x,"Nervously waiting for the fate ..."/)')
-     
+
      ! Decide if accept the new config
      temp = randy()
      write(stdout, '(5x,"The fate says:",5x,F10.7)') temp
@@ -1771,7 +1799,7 @@ CONTAINS
      write (stdout, '(5x,"The current acceptance is :",3x,F10.6)') dble(num_accept)/istep
 
      ! Print the trajectory
-#ifdef __MPI  
+#ifdef __MPI
      if(ionode) then
 #endif
      OPEN(117,file="trajectory-"//trim(prefix)//".xyz",status="unknown",position='APPEND')
@@ -1781,7 +1809,7 @@ CONTAINS
        WRITE( 117, '(A3,3X,3F14.9)') atm(ityp(ia)),tau(:,ia)*alat*bohr_radius_angs
      enddo
      close(117)
-#ifdef __MPI  
+#ifdef __MPI
      endif
 #endif
 
@@ -1811,7 +1839,7 @@ CONTAINS
         write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
-        
+
         write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
@@ -1819,16 +1847,16 @@ CONTAINS
         do iat=1,nr_of_atoms !aris
            write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
         end do !aris
-        
-        
+
+
         do iat=1,nr_of_atoms !aris
            write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat)
         end do !aris
-        
+
         DO iat=1,nr_of_atoms
            write(iunfor,101) atm(ityp(iat)), force(1:3,iat)
         ENDDO
-        
+
     end if !aris
 
 100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
@@ -1862,7 +1890,7 @@ CONTAINS
         write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
-        
+
         write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
@@ -1884,7 +1912,7 @@ CONTAINS
                     force_ewald(1:3, iat)
         ENDDO
 
-        
+
     end if
 100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
 101 format(A,3(1X,f16.10))
@@ -1918,7 +1946,7 @@ CONTAINS
         write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
-        
+
         write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
@@ -1941,7 +1969,7 @@ CONTAINS
                     force_ewald_pb(1:3, iat)
         ENDDO
 
-        
+
     end if
 100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
 101 format(A,3(1X,f16.10))
@@ -1975,7 +2003,7 @@ CONTAINS
         write(iunevp,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunpos,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
-        
+
         write(iunvel, 100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
 
         write(iunfor,100) istep, time, ekin, etot, conserved_quantity, temp_new, walltime_s, lelectrons_converged
@@ -1983,12 +2011,12 @@ CONTAINS
         do iat=1,nr_of_atoms !aris
            write(iunpos,101) atm(ityp(iat)),alat*tau(1:3,iat)
         end do !aris
-        
-        
+
+
         do iat=1,nr_of_atoms !aris
            write(iunvel,101) atm(ityp(iat)),alat*vel(1:3,iat)
         end do !aris
-        
+
 
         IF ( ldecompose_forces ) THEN
             DO iat=1,nr_of_atoms
@@ -2004,12 +2032,12 @@ CONTAINS
                write(iunfor,101) atm(ityp(iat)), force(1:3,iat)
             ENDDO
         ENDIF
-        
+
     end if !aris
 100 format("> ",I7,4(1X, f16.8),1X, f12.4, 1X, f8.1, 1X, L3)
 101 format(A,3(1X,f16.10))
 102 format(A,12(1X,f16.10))
    END SUBROUTINE write_traj !aris
-   
+
 END MODULE dynamics_module
 
