@@ -235,7 +235,7 @@ CONTAINS
 
       !
       IF ( iverbosity > 0 ) THEN
-     
+
           WRITE( UNIT = stdout, &
                  FMT = '(/,5X,"Entering Dynamics:",T28, /, &
                         & 10X, "istep",T30," = ", I5, /, &
@@ -243,6 +243,10 @@ CONTAINS
                         & 10X,"simulation_time_ps", T30, " = ",F10.4,/)' ) &
               istep, walltime_s, elapsed_time
           !
+      ELSE
+          WRITE( UNIT = stdout, &
+                 FMT = '(/,5X,"Entering Dynamics:", I6)') istep
+
       ENDIF
 
       IF ( control_temp ) THEN
