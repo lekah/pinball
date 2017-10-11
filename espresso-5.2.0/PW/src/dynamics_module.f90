@@ -59,6 +59,7 @@ MODULE dynamics_module
    REAL(DP), ALLOCATABLE :: mass(:)
    REAL(DP), ALLOCATABLE :: diff_coeff(:)
    REAL(DP), ALLOCATABLE :: radial_distr(:,:)
+   REAL(DP) :: ebath = 0.0D0
    !
    INTEGER, PARAMETER :: hist_len = 1000
    !
@@ -140,6 +141,8 @@ CONTAINS
       REAL(DP) :: ekin, etotold
       REAL(DP) :: total_mass, temp_new, temp_av, elapsed_time
       REAL(DP) :: delta(3), ml(3), mlt
+      REAL(DP) :: vel_last_step(3) ! I remember a velocity of the last  step to calculate
+      ! flux of energy from bath to system
       INTEGER  :: na
       ! istep0 counts MD steps done during this run
       ! (istep counts instead all MD steps, including those of previous runs)
@@ -378,7 +381,7 @@ CONTAINS
           ! flipper_temp = 2.D0 / dble( nr_of_pinballs ) * flipper_energy_kin * ry_to_kelvin
           ekin = flipper_energy_kin
           etot = flipper_energy_external + flipper_ewld_energy + flipper_nlenergy
-          flipper_cons_qty  =  ekin + etot
+          flipper_cons_qty  =  ekin + etot + ebath
       else
           ml   = 0.D0
           ekin = 0.D0
@@ -453,9 +456,12 @@ CONTAINS
                              & 5X,"Eext                  = ",F14.8," Ry",/,  &
                              & 5X,"Eewld                 = ",F14.8," Ry",/,  &
                              & 5X,"Etot                  = ",F14.8," Ry",/,  &
-                             & 5X,"Ekin + Etot (const)   = ",F14.8," Ry",/,  &
+                             & 5X,"Ebath                 = ",F14.8," Ry",/,  &
+                             & 5X,"Ekin + Etot           = ",F14.8," Ry",/,  &
+                             & 5X,"Ekin + Etot + ebath   = ",F14.8," Ry",/,  &
                              & 5X,"temperature           = ",F14.8," K ")' ) &
-                    ekin, flipper_energy_external, flipper_ewld_energy, etot, flipper_cons_qty, temp_new
+                    ekin, flipper_energy_external, flipper_ewld_energy, etot, ebath, ekin+etot, &
+                    flipper_cons_qty, temp_new
 
                 IF (ldecompose_ewald) THEN
                     call write_traj_decompose_ewald(                            &
@@ -562,6 +568,8 @@ CONTAINS
          IMPLICIT NONE
          !
          istep = 0
+         !Setting energy of the bath to 0
+         ebath = 0.0D0
          !
          WRITE( UNIT = stdout, &
                FMT = '(/,5X,"Molecular Dynamics Calculation")' )
@@ -777,9 +785,16 @@ CONTAINS
                       ! ... N.B. velocities must in a.u. units of alat and are zero
                       ! ...      for fixed ions
                       !
+                      ! writing velocity here to rember
+                      vel_last_step(:) = vel(:,na)
                       vel(:,na) = dble( if_pos(:,na) ) * &
                                   gauss_dist( 0.D0, sigma, 3 ) / alat
                       !
+                      ! The kinetic energy flowing to the bat is the old kinetic energy minus the new
+                      ebath = ebath + 0.5D0 * mass(na)  * alat**2 * &
+                ( vel_last_step(1)**2 + vel_last_step(2)**2 + vel_last_step(3)**2 &
+                    - vel(1,na)**2 - vel(2,na)**2 - vel(3,na)**2 )
+
                    ENDIF
                 ENDDO
             ELSE

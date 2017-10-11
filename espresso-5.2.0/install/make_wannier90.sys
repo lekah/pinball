@@ -2,8 +2,8 @@
 # WANNIER90 	
 #=======================================
 
-F90=mpiifort
-FCOPTS=$(FFLAGS) -nomodule 
-LDOPTS=-static-intel 
+F90=mpif90
+FCOPTS=$(FFLAGS) -x f95-cpp-input 
+LDOPTS=-g -pthread
 
-LIBS =    -lmkl_intel_lp64  -lmkl_sequential -lmkl_core 
+LIBS =  -llapack  -lblas   -lblas  
