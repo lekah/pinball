@@ -245,10 +245,6 @@ CONTAINS
                         & 10X, "clock_time",T30," = ", F10.4, /, &
                         & 10X,"simulation_time_ps", T30, " = ",F10.4,/)' ) &
               istep, walltime_s, elapsed_time
-          !
-      ELSE
-          WRITE( UNIT = stdout, &
-                 FMT = '(/,5X,"Entering Dynamics:", I6)') istep
 
       ENDIF
 
@@ -452,16 +448,16 @@ CONTAINS
 
         IF (lflipper) THEN
             IF (mod(istep, iprint) .eq. 0) THEN
-                WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
-                             & 5X,"Eext                  = ",F14.8," Ry",/,  &
-                             & 5X,"Eewld                 = ",F14.8," Ry",/,  &
-                             & 5X,"Etot                  = ",F14.8," Ry",/,  &
-                             & 5X,"Ebath                 = ",F14.8," Ry",/,  &
-                             & 5X,"Ekin + Etot           = ",F14.8," Ry",/,  &
-                             & 5X,"Ekin + Etot + ebath   = ",F14.8," Ry",/,  &
-                             & 5X,"temperature           = ",F14.8," K ")' ) &
-                    ekin, flipper_energy_external, flipper_ewld_energy, etot, ebath, ekin+etot, &
-                    flipper_cons_qty, temp_new
+!~                 WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
+!~                              & 5X,"Eext                  = ",F14.8," Ry",/,  &
+!~                              & 5X,"Eewld                 = ",F14.8," Ry",/,  &
+!~                              & 5X,"Etot                  = ",F14.8," Ry",/,  &
+!~                              & 5X,"Ebath                 = ",F14.8," Ry",/,  &
+!~                              & 5X,"Ekin + Etot           = ",F14.8," Ry",/,  &
+!~                              & 5X,"Ekin + Etot + ebath   = ",F14.8," Ry",/,  &
+!~                              & 5X,"temperature           = ",F14.8," K ")' ) &
+!~                     ekin, flipper_energy_external, flipper_ewld_energy, etot, ebath, ekin+etot, &
+!~                     flipper_cons_qty, temp_new
 
                 IF (ldecompose_ewald) THEN
                     call write_traj_decompose_ewald(                            &
@@ -816,7 +812,7 @@ CONTAINS
             ENDIF
                !
             !
-            IF ( nat_moved > 0) WRITE( UNIT = stdout, &
+            IF ( nat_moved > 0 .and. iverbosity > 0 ) WRITE( UNIT = stdout, &
                FMT = '(/,5X,"Andersen thermostat: ",I4," collisions")' ) &
                      nat_moved
             !
