@@ -378,6 +378,7 @@ CONTAINS
           ekin = flipper_energy_kin
           etot = flipper_energy_external + flipper_ewld_energy + flipper_nlenergy
           flipper_cons_qty  =  ekin + etot + ebath
+         
       else
           ml   = 0.D0
           ekin = 0.D0
@@ -447,17 +448,17 @@ CONTAINS
 
 
         IF (lflipper) THEN
-            IF (mod(istep, iprint) .eq. 0) THEN
-!~                 WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
-!~                              & 5X,"Eext                  = ",F14.8," Ry",/,  &
-!~                              & 5X,"Eewld                 = ",F14.8," Ry",/,  &
-!~                              & 5X,"Etot                  = ",F14.8," Ry",/,  &
-!~                              & 5X,"Ebath                 = ",F14.8," Ry",/,  &
-!~                              & 5X,"Ekin + Etot           = ",F14.8," Ry",/,  &
-!~                              & 5X,"Ekin + Etot + ebath   = ",F14.8," Ry",/,  &
-!~                              & 5X,"temperature           = ",F14.8," K ")' ) &
-!~                     ekin, flipper_energy_external, flipper_ewld_energy, etot, ebath, ekin+etot, &
-!~                     flipper_cons_qty, temp_new
+            IF ((mod(istep, iprint) .eq. 0) .AND. ( iverbosity > 0 )) THEN
+                 WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
+                              & 5X,"Eext                  = ",F14.8," Ry",/,  &
+                              & 5X,"Eewld                 = ",F14.8," Ry",/,  &
+                              & 5X,"Etot                  = ",F14.8," Ry",/,  &
+                              & 5X,"Ebath                 = ",F14.8," Ry",/,  &
+                              & 5X,"Ekin + Etot           = ",F14.8," Ry",/,  &
+                              & 5X,"Ekin + Etot + ebath   = ",F14.8," Ry",/,  &
+                              & 5X,"temperature           = ",F14.8," K ")' ) &
+                     ekin, flipper_energy_external, flipper_ewld_energy, etot, ebath, ekin+etot, &
+                     flipper_cons_qty, temp_new
 
                 IF (ldecompose_ewald) THEN
                     call write_traj_decompose_ewald(                            &
