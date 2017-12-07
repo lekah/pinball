@@ -2086,6 +2086,7 @@ CONTAINS
       !
       USE ions_base,          ONLY : nat, if_pos
       USE constraints_module, ONLY : nconstr
+      USE cell_base,          ONLY : alat 
       !
       IMPLICIT NONE
       !
@@ -2131,7 +2132,7 @@ CONTAINS
          aux  = sqrt(aux2)
          
          ! Now I need to calculate how much energy uis flowing into the bath
-         aux3 = ( 1.0D0 - aux2 ) * 0.5D0
+         aux3 = ( 1.0D0 - aux2 ) * 0.5D0 * alat**2
          DO na = 1, nat
              !
              ebath  = ebath + aux3 * mass(na) * &
