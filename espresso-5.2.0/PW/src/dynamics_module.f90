@@ -448,8 +448,9 @@ CONTAINS
 
 
         IF (lflipper) THEN
-            IF ((mod(istep, iprint) .eq. 0) .AND. ( iverbosity > 0 )) THEN
-                 WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
+            IF ( mod(istep, iprint) .eq. 0 )  THEN
+                  IF ( iverbosity > 0 ) THEN
+                      WRITE( stdout, '(5X,"Ekin                  = ",F14.8," Ry",/,  &
                               & 5X,"Eext                  = ",F14.8," Ry",/,  &
                               & 5X,"Eewld                 = ",F14.8," Ry",/,  &
                               & 5X,"Etot                  = ",F14.8," Ry",/,  &
@@ -459,6 +460,7 @@ CONTAINS
                               & 5X,"temperature           = ",F14.8," K ")' ) &
                      ekin, flipper_energy_external, flipper_ewld_energy, etot, ebath, ekin+etot, &
                      flipper_cons_qty, temp_new
+                ENDIF
 
                 IF (ldecompose_ewald) THEN
                     call write_traj_decompose_ewald(                            &
