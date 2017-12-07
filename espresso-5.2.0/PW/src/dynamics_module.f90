@@ -489,21 +489,23 @@ CONTAINS
         ELSE
           ! LEONID: Let's reduce the output of the MD
             if (mod(istep, iprint) .eq. 0) THEN
-                ! WRITE( stdout, '(10X,"kinetic_energy      = ",F14.8," Ry",/,  &
-                !             & 10X,"potential_energy    = ",F14.8," Ry",/,  &
-                !             & 10X,"total_energy        = ",F14.8," Ry",/,  &
-                !             & 10X,"temperature         = ",F14.8," K ")' ) &
-                !  ekin, etot, ( ekin  + etot ), temp_new
+                WRITE( stdout, '(10X,"kinetic_energy      = ",F14.8," Ry",/,  &
+                             & 10X,"potential_energy    = ",F14.8," Ry",/,  &
+                             & 10X,"total_energy        = ",F14.8," Ry",/,  &
+                             & 10X,"Ebath               = ",F14.8," Ry",/,  &
+                             & 10X,"Ekin+Etot+Ebath     = ",F14.8," Ry",/,  &
+                             & 10X,"temperature         = ",F14.8," K ")' ) &
+                  ekin, etot, ( ekin  + etot ), ebath,( ekin  + etot + ebath), temp_new
                 IF (ldecompose_forces) THEN
                     call write_traj_decompose_forces(                           &
                             istep, elapsed_time, tau, vel,                      &
                             force, forcelc, forcenl, forceion,ekin, etot,       &
-                            ekin+etot, temp_new, walltime_s, nat, conv_elec     &
+                            ekin+etot+ebath, temp_new, walltime_s, nat, conv_elec     &
                         )
                 ELSE
                     call write_traj_simple(                                       &
                             istep, elapsed_time, tau, vel,                        &
-                            force,ekin, etot, ekin+etot, temp_new, walltime_s,    &
+                            force,ekin, etot, ekin+etot+ebath, temp_new, walltime_s,    &
                             nat, conv_elec                                        &
                         )
                 ENDIF
@@ -2092,8 +2094,9 @@ CONTAINS
       !
       INTEGER  :: i, ndof
       REAL(DP) :: factor, rr
-      REAL(DP) :: aux, aux2
+      REAL(DP) :: aux, aux2, aux3
       real(DP), external :: gasdev, sumnoises
+      INTEGER  :: na
       !
       ! ... the number of degrees of freedom
       !
@@ -2126,9 +2129,15 @@ CONTAINS
                        + 2*rr*sqrt((factor*(1.0-factor)*required_temp)/(ndof*system_temp))
          !
          aux  = sqrt(aux2)
-         ebath = (1.0D0 - aux) * ekin
-         ! print*, '!!!', aux, ebath, ekin
-         !
+         
+         ! Now I need to calculate how much energy uis flowing into the bath
+         aux3 = ( 1.0D0 - aux2 ) * 0.5D0
+         DO na = 1, nat
+             !
+             ebath  = ebath + aux3 * mass(na) * &
+                            ( vel(1,na)**2 + vel(2,na)**2 + vel(3,na)**2 )
+         END DO
+
       ELSE
          !
          aux = 0.d0
