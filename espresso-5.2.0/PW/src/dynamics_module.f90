@@ -60,6 +60,7 @@ MODULE dynamics_module
    REAL(DP), ALLOCATABLE :: diff_coeff(:)
    REAL(DP), ALLOCATABLE :: radial_distr(:,:)
    REAL(DP) :: ebath = 0.0D0
+   REAL(DP) :: ekin
    !
    INTEGER, PARAMETER :: hist_len = 1000
    !
@@ -138,7 +139,7 @@ CONTAINS
       !
       IMPLICIT NONE
       !
-      REAL(DP) :: ekin, etotold
+      REAL(DP) :: etotold
       REAL(DP) :: total_mass, temp_new, temp_av, elapsed_time
       REAL(DP) :: delta(3), ml(3), mlt
       REAL(DP) :: vel_last_step(3) ! I remember a velocity of the last  step to calculate
@@ -604,6 +605,13 @@ CONTAINS
                             &     "Characteristic time =",i3,"*timestep")') &
                                nraise
                !
+            CASE( 'svr', 'Svr', 'SVR' )
+               !
+               WRITE( UNIT = stdout, &
+                     FMT = '(/,5X,"temperature is controlled by smooth ", &
+                            &     "canonical sampling velocity rescaling",/,5x,&
+                            &     "Characteristic time =",i3,"*timestep")') &
+                               nraise
             CASE( 'initial', 'Initial' )
                !
                WRITE( UNIT = stdout, &
@@ -767,6 +775,15 @@ CONTAINS
                 FMT = '(/,5X,"Soft (Berendsen) velocity rescaling")' )
             !
             CALL thermalize( nraise, temp_new, temperature )
+            !
+         CASE( 'svr', 'Svr', 'SVR' )
+            !
+            WRITE( UNIT = stdout, &
+                FMT = '(/,5X,"Canonical sampling velocity rescaling")' )
+            !
+            WRITE( stdout, *) " I am in thermal", temperature
+            !
+            CALL thermalize_resamp_vscaling( nraise, temp_new, temperature )
             !
          CASE( 'andersen', 'Andersen' )
             !
@@ -2059,6 +2076,68 @@ CONTAINS
 101 format(A,3(1X,f16.10))
 102 format(A,12(1X,f16.10))
    END SUBROUTINE write_traj !aris
+
+
+
+   SUBROUTINE thermalize_resamp_vscaling (nraise, system_temp, required_temp)
+      !-----------------------------------------------------------------------
+      !
+      USE ions_base,          ONLY : nat, if_pos
+      USE constraints_module, ONLY : nconstr
+      !
+      IMPLICIT NONE
+      !
+      REAL(DP), INTENT(in) :: system_temp, required_temp
+      INTEGER,  INTENT(in) :: nraise
+      !
+      INTEGER  :: i, ndof
+      REAL(DP) :: factor, rr
+      REAL(DP) :: aux, aux2
+      real(DP), external :: gasdev, sumnoises
+      !
+      ! ... the number of degrees of freedom
+      !
+      IF ( ANY( if_pos(:,:) == 0 ) ) THEN
+         !
+         ndof = 3*nat - count( if_pos(:,:) == 0 ) - nconstr
+         !
+      ELSE
+         !
+         ndof = 3*nat - 3 - nconstr
+         !
+      ENDIF
+      !
+      IF ( nraise > 0 ) THEN
+         !
+         ! ... the "rise time" is tau=nraise*dt so dt/tau=1/nraise
+         ! ... Equivalent to traditional rescaling if nraise=1
+         !
+         factor = exp(-1.0/nraise)
+      ELSE
+         !
+         factor = 0.0
+         !  
+      ENDIF
+      !
+      IF ( system_temp > 0.D0 .and. required_temp > 0.D0 ) THEN
+         !
+         rr = gasdev()
+         aux2 = factor + (1.0-factor)*( sumnoises(ndof-1) +rr**2)*required_temp/(ndof*system_temp) &
+                       + 2*rr*sqrt((factor*(1.0-factor)*required_temp)/(ndof*system_temp))
+         !
+         aux  = sqrt(aux2)
+         ebath = (1.0D0 - aux) * ekin
+         ! print*, '!!!', aux, ebath, ekin
+         !
+      ELSE
+         !
+         aux = 0.d0
+         !
+      ENDIF
+      !
+      vel(:,:) = vel(:,:) * aux
+      !   
+   END SUBROUTINE thermalize_resamp_vscaling
 
 END MODULE dynamics_module
 
