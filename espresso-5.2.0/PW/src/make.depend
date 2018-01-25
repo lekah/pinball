@@ -382,6 +382,7 @@ dynamics_module.o : ../../Modules/random_numbers.o
 dynamics_module.o : pinball.o
 dynamics_module.o : pwcom.o
 dynamics_module.o : symm_base.o
+dynamics_module.o : svr_util_functions.o
 efermig.o : ../../Modules/constants.o
 efermig.o : ../../Modules/io_global.o
 efermig.o : ../../Modules/kind.o
