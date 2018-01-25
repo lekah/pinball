@@ -219,6 +219,7 @@ sum_band.o \
 sumkg.o \
 sumkt.o \
 summary.o \
+svr_util_functions.o \
 symme.o \
 symm_base.o \
 symmetrize_at.o \
