@@ -31,5 +31,4 @@ under the guidance of Nicola Marzari at the Theory and Simulations of Materials 
 ### Contact
 
 If you have questions about the code or want to report bugs, please submit an issue on https://github.com/lekah/pinball/issues.
-For any more private questions, you can write to leonidkahle[at]gmail[dot]com
-
+For any more private questions, you can write to leonidkahle[at]gmail[dot]com, and make sure you have ``pinball'' in the subject line.
