@@ -22,10 +22,10 @@ Kahle, Marcolongo, Marzari, Physical Review Materials 2, 065405 (2018)
 
 The pinball code was implemented by:
 
- - Leonid Kahle 
- - Aris Marclongo
+* Leonid Kahle 
+* Aris Marcolongo
 
-under the guidance of Nicola Marzari at the Theory and Simulations of Materials Lab (http://theossrv1.epfl.ch) at EPFL.
+under the guidance of Nicola Marzari at the Theory and Simulations of Materials Lab ( http://theossrv1.epfl.ch ) at EPFL.
 
 
 ### Contact
