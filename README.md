@@ -13,7 +13,7 @@ This code is a modification of Quantum ESPRESSO, licensed under GNU GPL, refer t
 
 ### References & Citing
 
-The theory behind NequIP is described in the following publication, we would appreciate citing us if you use this work.
+The theory and implementation of the pinball model are described in the following publication, we would appreciate citing us if you use this work.
 
 Kahle, Marcolongo, Marzari, Physical Review Materials 2, 065405 (2018)
 
@@ -22,10 +22,10 @@ Kahle, Marcolongo, Marzari, Physical Review Materials 2, 065405 (2018)
 
 The pinball code was implemented by:
 
-    - Leonid Kahle 
-    - Aris Marclongo
+ - Leonid Kahle 
+ - Aris Marclongo
 
-under the guidance of Nicola Marzari at EPFL.
+under the guidance of Nicola Marzari at the Theory and Simulations of Materials Lab (http://theossrv1.epfl.ch) at EPFL.
 
 
 ### Contact
