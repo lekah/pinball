@@ -792,47 +792,28 @@ CONTAINS
             kt = temperature / ry_to_kelvin
             nat_moved = 0
             !
-            if ( lflipper )  THEN
-                DO na = 1, nr_of_pinballs
-                   !
-                   IF ( randy() < 1.D0 / dble( nraise ) ) THEN
-                      !
-                      nat_moved = nat_moved + 1
-                      sigma = sqrt( kt / mass(na) )
-                      !
-                      ! ... N.B. velocities must in a.u. units of alat and are zero
-                      ! ...      for fixed ions
-                      !
-                      ! writing velocity here to rember
-                      vel_last_step(:) = vel(:,na)
-                      vel(:,na) = dble( if_pos(:,na) ) * &
-                                  gauss_dist( 0.D0, sigma, 3 ) / alat
-                      !
-                      ! The kinetic energy flowing to the bat is the old kinetic energy minus the new
-                      ebath = ebath + 0.5D0 * mass(na)  * alat**2 * &
-                ( vel_last_step(1)**2 + vel_last_step(2)**2 + vel_last_step(3)**2 &
-                    - vel(1,na)**2 - vel(2,na)**2 - vel(3,na)**2 )
-
-                   ENDIF
-                ENDDO
-            ELSE
-                DO na = 1, nat
-                   !
-                   IF ( randy() < 1.D0 / dble( nraise ) ) THEN
-                      !
-                      nat_moved = nat_moved + 1
-                      sigma = sqrt( kt / mass(na) )
-                      !
-                      ! ... N.B. velocities must in a.u. units of alat and are zero
-                      ! ...      for fixed ions
-                      !
-                      vel(:,na) = dble( if_pos(:,na) ) * &
-                                  gauss_dist( 0.D0, sigma, 3 ) / alat
-                      !
-                   ENDIF
-                ENDDO
-            ENDIF
+            DO na = 1, nat
                !
+               IF ( randy() < 1.D0 / dble( nraise ) ) THEN
+                  !
+                  nat_moved = nat_moved + 1
+                  sigma = sqrt( kt / mass(na) )
+                  !
+                  ! ... N.B. velocities must in a.u. units of alat and are zero
+                  ! ...      for fixed ions
+                  !
+                  ! writing velocity here to rember
+                  vel_last_step(:) = vel(:,na)
+                  vel(:,na) = dble( if_pos(:,na) ) * &
+                              gauss_dist( 0.D0, sigma, 3 ) / alat
+                  !
+                  ! The kinetic energy flowing to the bat is the old kinetic energy minus the new
+                  ebath = ebath + 0.5D0 * mass(na)  * alat**2 * &
+            ( vel_last_step(1)**2 + vel_last_step(2)**2 + vel_last_step(3)**2 &
+                - vel(1,na)**2 - vel(2,na)**2 - vel(3,na)**2 )
+
+               ENDIF
+            ENDDO
             !
             IF ( nat_moved > 0 .and. iverbosity > 0 ) WRITE( UNIT = stdout, &
                FMT = '(/,5X,"Andersen thermostat: ",I4," collisions")' ) &
@@ -2086,7 +2067,7 @@ CONTAINS
       !
       USE ions_base,          ONLY : nat, if_pos
       USE constraints_module, ONLY : nconstr
-      USE cell_base,          ONLY : alat 
+      USE cell_base,          ONLY : alat
       !
       IMPLICIT NONE
       !

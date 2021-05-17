@@ -53,6 +53,7 @@ MODULE pinball
         USE cell_base,          ONLY : omega
         use io_files,           ONLY : nwordwfc, diropn, iunwfc
         USE io_files,           ONLY : prefix
+        USE ions_base,          ONLY : if_pos
         USE input_parameters,   ONLY : prefix_flipper_charge
         USE lsda_mod,           ONLY : nspin
         USE wavefunctions_module,  ONLY: psic, evc
@@ -66,8 +67,7 @@ MODULE pinball
         IMPLICIT NONE
         
         INTEGER  :: igrid,iatom,igm
-        INTEGER  :: counter
-        INTEGER  :: na
+        INTEGER  :: na, iat
         INTEGER  :: ipol, ibnd, ig
         INTEGER :: iv, i, iun
         INTEGER, EXTERNAL :: find_free_unit
@@ -77,13 +77,14 @@ MODULE pinball
         REAL(DP), allocatable :: charge2(:)
 
 
-
-
         nr_of_pinballs = 0
         wg(:,:) = 2.0d0
-        DO counter = 1, nat
-            IF (ityp(counter) == 1) THEN
+        DO iat = 1, nat
+            IF (ityp(iat) == 1) THEN
                 nr_of_pinballs = nr_of_pinballs + 1
+                if_pos(1:3, iat) = 1
+            else
+                if_pos(1:3, iat) = 0
             END IF
         END DO
 
@@ -105,43 +106,6 @@ MODULE pinball
 
         call diropn(iun, 'wfc', 2*nwordwfc, exst )
         call davcio (evc, 2*nwordwfc, iun, 1,-1) 
-
-
-! This whole bunch of code below provided a check to see whether the charge sums up
-! correctly from the wavefunctions.
-
-!~         allocate(charge2(dffts%nnr))
-!~         charge2(:)=0.d0
-!~         do iv=1,nbnd !,2
-!~            psic=0.d0
-!~ 
-!~            psic(nls(1:npw))=evc(1:npw,iv)
-!~            psic(nlsm(1:npw))=CONJG(evc(1:npw,iv))
-!~ 
-!~            call invfft ('Wave', psic, dffts)
-!~            charge2(1:dffts%nnr)=charge2(1:dffts%nnr)+dble(psic(1:dffts%nnr))**2.0 ! + dimag(psic(1:dffts%nnr))**2.0
-!~ 
-!~         end do
-!~         q_tot=0.
-!~         q_tot2=0.
-!~         q_tot3=0.
-!~         do i=1,dffts%nnr
-!~            q_tot=q_tot + ( 2.d0 * charge2(i) - omega * charge_density%of_r(i, 1) )**2
-!~            q_tot2=q_tot2 + 2.d0 *charge2(i)
-!~            q_tot3=q_tot3 + charge_density%of_r(i, 1) * omega
-!~         end do
-!~         q_tot = q_tot / (dffts%nr1*dffts%nr2*dffts%nr3)
-!~         q_tot2 = q_tot2 / (dffts%nr1*dffts%nr2*dffts%nr3)
-!~         q_tot3 = q_tot3 /    (dffts%nr1*dffts%nr2*dffts%nr3)
-!~         call mp_sum(q_tot, intra_bgrp_comm)
-!~         call mp_sum(q_tot2, intra_bgrp_comm)
-!~         call mp_sum(q_tot3, intra_bgrp_comm)
-!~         print*,'q_tot',q_tot
-!~         print*,'q_tot2',q_tot2
-!~         print*,'q_tot3',q_tot3
-!~         deallocate(charge2)
-!~         ! temp END
-!~          print*, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
 
          psic(:)=(0.d0,0.d0)
 
