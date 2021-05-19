@@ -42,3 +42,6 @@ tempdir
 EPW/src/tags
 EPW/src/tmp
 LAXlib/*.fh
+BLAS
+Modules/version.f90
+lapack-3.2
