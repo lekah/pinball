@@ -783,8 +783,6 @@ CONTAINS
             WRITE( UNIT = stdout, &
                 FMT = '(/,5X,"Canonical sampling velocity rescaling")' )
             !
-            WRITE( stdout, *) " I am in thermal", temperature
-            !
             CALL thermalize_resamp_vscaling( nraise, temp_new, temperature )
             !
          CASE( 'andersen', 'Andersen' )
