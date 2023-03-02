@@ -109,7 +109,14 @@ MODULE pinball
 
          psic(:)=(0.d0,0.d0)
 
-         psic(1:dfftp%nnr)=dcmplx(charge_density%of_r(1:dfftp%nnr,1)) 
+         if ( nspin == 2) then
+            psic(1:dfftp%nnr)=dcmplx(charge_density%of_r(1:dfftp%nnr,1)+ &
+                                      charge_density%of_r(1:dfftp%nnr,2))
+         else
+            psic(1:dfftp%nnr)=dcmplx(charge_density%of_r(1:dfftp%nnr,1))
+         end if
+
+
          CALL fwfft ('Dense', psic, dfftp)
          DO igm=1,ngm 
             charge_g(igm)=psic(nl(igm))
