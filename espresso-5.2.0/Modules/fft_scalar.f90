@@ -169,7 +169,7 @@
      LOGICAL, SAVE :: dfti_first = .TRUE.
      INTEGER :: dfti_status = 0
      !
-     IF( dfti_first .EQ. .TRUE. ) THEN
+     IF( dfti_first .EQV. .TRUE. ) THEN
         DO ip = 1, ndims
            hand(ip)%desc => NULL()
         END DO
@@ -616,7 +616,7 @@
      !   Here initialize table only if necessary
      !
 #if defined __DFTI
-     IF( dfti_first .EQ. .TRUE. ) THEN
+     IF( dfti_first .EQV. .TRUE. ) THEN
         DO ip = 1, ndims
            hand(ip)%desc => NULL()
         END DO
